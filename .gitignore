@@ -1,0 +1,43 @@
+# Firmware (PlatformIO) file
+firmware/.pio/
+firmware/.vscode/
+*.o
+*.elf
+*.bin
+
+# Backend (Node module / Cloudflare Worker) =====
+backend/node_modules/
+backend/.wrangler/
+backend/dist/
+*.log
+npm-debug.log*
+
+# Secrets (สำคัญที่สุด)
+.env
+.env.local
+*.env
+firmware/src/config.h.local
+backend/.dev.vars
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Hardware (KiCad)
+hardware/**/*-backups/
+hardware/**/*.kicad_pcb-bak
+hardware/**/*.kicad_sch-bak
+hardware/**/fp-info-cache
+hardware/**/*.lck
+hardware/**/_autosave-*
+
+# docs
+docs/~$*
+docs/*.tmp
+docs/picture
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
