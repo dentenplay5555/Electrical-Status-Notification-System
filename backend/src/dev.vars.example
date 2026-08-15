@@ -1,0 +1,3 @@
+# คัดลอกไฟล์นี้เป็น .dev.vars แล้วใส่ค่าจริง (ห้าม commit .dev.vars ขึ้น git)
+LINE_ACCESS_TOKEN=
+LINE_USER_ID=

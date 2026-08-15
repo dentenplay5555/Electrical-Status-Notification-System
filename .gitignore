@@ -15,6 +15,7 @@ npm-debug.log*
 # Secrets (สำคัญที่สุด)
 .env
 .env.local
+.firmware/src/config.h
 *.env
 firmware/src/config.h.local
 backend/.dev.vars

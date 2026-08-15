@@ -1,0 +1,18 @@
+name = "appliance-notifier-backend"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# ----- KV: เก็บ "สถานะล่าสุด" อ่านเร็วสุด สำหรับ endpoint /status -----
+[[kv_namespaces]]
+binding = "appliance_db"
+id = "8e81e9f0782a48748f11da8b3edbbbcb"
+
+# ----- D1: เก็บ log ประวัติเหตุการณ์ทั้งหมด สำหรับสรุปรายวัน -----
+[[d1_databases]]
+binding = "DB"
+database_name = "appliance-db"
+database_id = "80d5d3eb-8c1f-4812-b67c-00643673a594"
+
+# ----- Cron: รันทุกวัน 09:10 UTC = 16:10 น. เวลาไทย -----
+[triggers]
+crons = ["10 9 * * *"]

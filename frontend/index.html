@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>สถานะเครื่องใช้ไฟฟ้า</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <main class="card">
+        <h1>สถานะเครื่องใช้ไฟฟ้า</h1>
+
+        <div id="status-badge" class="badge badge--loading">กำลังโหลด...</div>
+
+        <dl class="readings">
+            <div>
+                <dt>แรงดันไฟฟ้า</dt>
+                <dd id="voltage">-</dd>
+            </div>
+            <div>
+                <dt>กระแสไฟฟ้า</dt>
+                <dd id="current">-</dd>
+            </div>
+            <div>
+                <dt>กำลังไฟฟ้า</dt>
+                <dd id="power">-</dd>
+            </div>
+        </dl>
+
+        <p class="last-updated">อัปเดตล่าสุด: <span id="last-updated">-</span></p>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
