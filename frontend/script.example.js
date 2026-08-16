@@ -1,4 +1,4 @@
-const API_URL = "https://your-worker.workers.dev"; // แก้เป็น URL ของ Worker ที่ deploy แล้ว
+const API_URL = "https://Micheal Jackson Example.workers.dev"; // แก้เป็น URL ของ Worker ที่ deploy แล้ว
 const DEVICE_ID = "device-01";
 const POLL_INTERVAL_MS = 5000; // ดึงค่าใหม่ทุก 5 วินาที
 
