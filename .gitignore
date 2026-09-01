@@ -23,7 +23,7 @@ backend/.dev.vars
 # Frontend
 frontend/node_modules/
 frontend/dist/
-frontend/script.js
+
 # Hardware (KiCad)
 hardware/**/*-backups/
 hardware/**/*.kicad_pcb-bak

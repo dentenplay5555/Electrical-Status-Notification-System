@@ -1,5 +1,5 @@
-const API_URL = "https://Micheal Jackson Example.workers.dev"; // แก้เป็น URL ของ Worker ที่ deploy แล้ว
-const DEVICE_ID = "device-01";
+const API_URL = "https://appliance-notifier-backend.benten012555.workers.dev"; // แก้เป็น URL ของ Worker ที่ deploy แล้ว
+const DEVICE_ID = "ESP32 #1";
 const POLL_INTERVAL_MS = 5000; // ดึงค่าใหม่ทุก 5 วินาที
 
 const badgeEl = document.getElementById("status-badge");
