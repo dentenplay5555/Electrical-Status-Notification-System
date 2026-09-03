@@ -6,18 +6,15 @@ import { getTodaySummary } from "./lib/db";
 import { sendLineMessage } from "./lib/line";
 
 export default {
-    // ----- HTTP requests (จาก ESP32 และเว็บไซต์) -----
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
 
         if (url.pathname === "/update" && request.method === "POST") {
             return handleUpdate(request, env);
         }
-
         if (url.pathname === "/status" && request.method === "GET") {
             return handleStatus(request, env);
         }
-
         if (url.pathname === "/health" && request.method === "GET") {
             return handleHealth();
         }
@@ -25,20 +22,23 @@ export default {
         return Response.json({ error: "not found" }, { status: 404 });
     },
 
-    // ----- Cron trigger: รันทุกวัน 09:10 UTC = 16:10 น. ไทย (ตั้งใน wrangler.toml) -----
+    // ----- Cron trigger: รันทุกวัน 09:10 UTC = 16:10 น. ไทย -----
     async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
-        const deviceId = "device-01";
-        const summary = await getTodaySummary(env, deviceId);
+        const deviceId = "ESP32-01";
+        const summaryRows = await getTodaySummary(env, deviceId);
 
-        const totalEvents = summary?.total_events ?? 0;
-        const onEvents = summary?.on_events ?? 0;
-        const peakPower = summary?.peak_power_mw ?? 0;
+        if (!summaryRows || summaryRows.length === 0) {
+            await sendLineMessage(env, `📊 สรุปการใช้งานวันนี้\n${deviceId}\nไม่มีข้อมูลบันทึกวันนี้`);
+            return;
+        }
 
-        const text =
-            `📊 สรุปการใช้งานวันนี้\n` +
-            `จำนวนครั้งที่บันทึกข้อมูล: ${totalEvents}\n` +
-            `จำนวนครั้งที่เปิดเครื่อง: ${onEvents}\n` +
-            `กำลังไฟฟ้าสูงสุด: ${peakPower} mW`;
+        let text = `📊 สรุปการใช้งานวันนี้\n${deviceId}\n`;
+        for (const row of summaryRows as any[]) {
+            text += `\n${row.sensor_id}\n`;
+            text += `จำนวนครั้งที่บันทึก: ${row.total_readings}\n`;
+            text += `จำนวนครั้งที่เปิด: ${row.on_readings}\n`;
+            text += `กำลังไฟฟ้าสูงสุด: ${row.peak_power_mw} mW\n`;
+        }
 
         await sendLineMessage(env, text);
     },

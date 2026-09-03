@@ -1,11 +1,8 @@
-const API_URL = "https://appliance-notifier-backend.benten012555.workers.dev"; // แก้เป็น URL ของ Worker ที่ deploy แล้ว
-const DEVICE_ID = "ESP32 #1";
-const POLL_INTERVAL_MS = 5000; // ดึงค่าใหม่ทุก 5 วินาที
+const API_URL = "https://your-worker.workers.dev"; // แก้เป็น URL ของ Worker ที่ deploy แล้ว
+const DEVICE_ID = "ESP32-01";  // device_id ของ ESP32 ไม่ใช่ sensor_id
+const POLL_INTERVAL_MS = 5000;
 
-const badgeEl = document.getElementById("status-badge");
-const voltageEl = document.getElementById("voltage");
-const currentEl = document.getElementById("current");
-const powerEl = document.getElementById("power");
+const sensorsEl = document.getElementById("sensors");
 const lastUpdatedEl = document.getElementById("last-updated");
 
 async function fetchStatus() {
@@ -14,31 +11,58 @@ async function fetchStatus() {
         const result = await response.json();
         render(result);
     } catch (err) {
-        // เรียก API ไม่สำเร็จเลย (เช่น อินเทอร์เน็ตฝั่งเว็บมีปัญหา) ก็ถือว่าไม่รู้สถานะ
-        render({ status: "N/A", reason: "เรียก API ไม่สำเร็จ" });
+        render({ status: "N/A", last_seen: null, sensors: [] });
     }
 }
 
 function render(result) {
-    if (result.status === "N/A") {
-        setBadge("badge--na", "N/A (ไม่ทราบสถานะ)");
-        lastUpdatedEl.textContent = result.last_seen ? formatTime(result.last_seen) : "-";
+    lastUpdatedEl.textContent = result.last_seen ? formatTime(result.last_seen) : "-";
+
+    if (result.status === "N/A" || result.sensors.length === 0) {
+        sensorsEl.innerHTML = `<div class="sensor-card"><span class="badge badge--na">N/A (ไม่ทราบสถานะ)</span></div>`;
         return;
     }
 
-    const data = result.data;
-    const isOn = data.is_on;
-
-    setBadge(isOn ? "badge--on" : "badge--off", isOn ? "เปิดอยู่" : "ปิดอยู่");
-    voltageEl.textContent = `${data.voltage_v.toFixed(2)} V`;
-    currentEl.textContent = `${data.current_ma.toFixed(1)} mA`;
-    powerEl.textContent = `${data.power_mw.toFixed(1)} mW`;
-    lastUpdatedEl.textContent = formatTime(data.updated_at);
+    sensorsEl.innerHTML = "";
+    for (const sensor of result.sensors) {
+        sensorsEl.appendChild(renderSensorCard(sensor));
+    }
 }
 
-function setBadge(className, text) {
-    badgeEl.className = `badge ${className}`;
-    badgeEl.textContent = text;
+function renderSensorCard(sensor) {
+    const card = document.createElement("div");
+    card.className = "sensor-card";
+
+    let badgeClass = "badge--off";
+    let badgeText = "ปิดอยู่";
+
+    if (!sensor.ok) {
+        badgeClass = "badge--error";
+        badgeText = "เซนเซอร์หลุด";
+    } else if (sensor.is_on) {
+        badgeClass = "badge--on";
+        badgeText = "เปิดอยู่";
+    }
+
+    card.innerHTML = `
+        <div class="sensor-card__id">${sensor.sensor_id}</div>
+        <div class="badge ${badgeClass}">${badgeText}</div>
+        <dl class="readings">
+            <div>
+                <dt>แรงดัน</dt>
+                <dd>${sensor.voltage_v.toFixed(2)} V</dd>
+            </div>
+            <div>
+                <dt>กระแส</dt>
+                <dd>${sensor.current_ma.toFixed(1)} mA</dd>
+            </div>
+            <div>
+                <dt>กำลังไฟ</dt>
+                <dd>${sensor.power_mw.toFixed(1)} mW</dd>
+            </div>
+        </dl>
+    `;
+    return card;
 }
 
 function formatTime(isoString) {

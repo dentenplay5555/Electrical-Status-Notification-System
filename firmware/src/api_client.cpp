@@ -1,0 +1,44 @@
+#include "api_client.h"
+#include "config.h"
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+static void addSensorToDoc(JsonArray &sensorsArray, const SensorReading &r) {
+    // ถ้าเซนเซอร์ตัวนี้อ่านไม่ได้ ยังส่งเข้าไปแต่ทำเครื่องหมาย ok:false
+    // เพื่อให้ backend/frontend รู้ว่า "ตัวนี้หลุด" ไม่ใช่แค่หายไปเงียบ ๆ
+    JsonObject s = sensorsArray.add<JsonObject>();
+    s["sensor_id"]  = r.sensor_id;
+    s["voltage_v"]  = r.voltage_v;
+    s["current_ma"] = r.current_ma;
+    s["power_mw"]   = r.power_mw;
+    s["is_on"]      = r.is_on;
+    s["ok"]         = r.ok;
+}
+
+bool api_sendReadings(const SensorReading &reading1, const SensorReading &reading2) {
+    HTTPClient http;
+    http.begin(API_ENDPOINT);
+    http.addHeader("Content-Type", "application/json");
+    http.setTimeout(5000);
+
+    JsonDocument doc;
+    doc["device_id"] = DEVICE_ID;
+    JsonArray sensorsArray = doc["sensors"].to<JsonArray>();
+    addSensorToDoc(sensorsArray, reading1);
+    addSensorToDoc(sensorsArray, reading2);
+
+    String payload;
+    serializeJson(doc, payload);
+
+    int httpCode = http.POST(payload);
+    bool ok = httpCode >= 200 && httpCode < 300;
+
+    if (ok) {
+        Serial.printf("[api] ส่งสำเร็จ (HTTP %d)\n", httpCode);
+    } else {
+        Serial.printf("[api] ส่งไม่สำเร็จ (HTTP %d)\n", httpCode);
+    }
+
+    http.end();
+    return ok;
+}

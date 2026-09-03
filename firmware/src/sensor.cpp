@@ -1,32 +1,50 @@
-#include "sensor_dual.h"
+#include "sensor.h"
+#include "config.h"
 #include <Wire.h>
 
-// ประกาศ object สองตัว พร้อมระบุ address ให้ตรงกับที่บัดกรีจริงบนโมดูล
-Adafruit_INA219 ina219_ch1(0x40);
-Adafruit_INA219 ina219_ch2(0x41);
+static Adafruit_INA219 ina219_1(INA219_1_ADDRESS);
+static Adafruit_INA219 ina219_2(INA219_2_ADDRESS);
+static bool sensor1Present = false;
+static bool sensor2Present = false;
 
 bool sensor_init() {
     Wire.begin();  // GPIO21=SDA, GPIO22=SCL (default) ใช้ร่วมกันทั้งสองตัว
 
-    bool ok1 = ina219_ch1.begin();
-    bool ok2 = ina219_ch2.begin();
+    sensor1Present = ina219_1.begin();
+    sensor2Present = ina219_2.begin();
 
-    if (!ok1) Serial.println("[sensor] ไม่พบ INA219 ที่ 0x40 (ช่อง 1)");
-    if (!ok2) Serial.println("[sensor] ไม่พบ INA219 ที่ 0x41 (ช่อง 2)");
+    if (!sensor1Present) Serial.println("[sensor] INA219 #1 (0x40) not found");
+    if (!sensor2Present) Serial.println("[sensor] INA219 #2 (0x41) not found");
 
-    return ok1 && ok2;
+    // คืนค่า true ถ้าเจออย่างน้อย 1 ตัว — ไม่ให้ ESP32 ค้าง/crash เพียงเพราะตัวเดียวหลุด
+    return sensor1Present || sensor2Present;
 }
 
-SensorReading sensor_read(Adafruit_INA219 &sensor) {
-    SensorReading reading;
-    reading.busVoltage_V = sensor.getBusVoltage_V();
-    reading.current_mA   = sensor.getCurrent_mA();
-    reading.power_mW     = sensor.getPower_mW();
-    return reading;
+static SensorReading readOne(Adafruit_INA219 &sensor, const char *sensorId, bool present) {
+    SensorReading r;
+    r.sensor_id = sensorId;
+
+    if (!present) {
+        r.voltage_v = 0;
+        r.current_ma = 0;
+        r.power_mw = 0;
+        r.is_on = false;
+        r.ok = false;
+        return r;
+    }
+
+    r.voltage_v  = sensor.getBusVoltage_V();
+    r.current_ma = sensor.getCurrent_mA();
+    r.power_mw   = sensor.getPower_mW();
+    r.is_on      = fabs(r.current_ma) > CURRENT_THRESHOLD_MA;
+    r.ok         = true;
+    return r;
 }
 
-// ตัวอย่างการเรียกใช้ใน main.cpp:
-//
-//   SensorReading r1 = sensor_read(ina219_ch1);
-//   SensorReading r2 = sensor_read(ina219_ch2);
-//   Serial.printf("ช่อง1: %.1f mA | ช่อง2: %.1f mA\n", r1.current_mA, r2.current_mA);
+SensorReading readSensor1() {
+    return readOne(ina219_1, SENSOR_1_ID, sensor1Present);
+}
+
+SensorReading readSensor2() {
+    return readOne(ina219_2, SENSOR_2_ID, sensor2Present);
+}

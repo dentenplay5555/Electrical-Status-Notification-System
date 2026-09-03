@@ -1,16 +1,21 @@
 #pragma once
 
 // ----- Wi-Fi -----
-#define WIFI_SSID "Neetcode"
-#define WIFI_PASSWORD "Freewifi"
+#define WIFI_SSID "your-wifi-name"
+#define WIFI_PASSWORD "your-wifi-password"
 
 // ----- Backend (Cloudflare Worker) -----
-#define API_ENDPOINT "https://Micheal Jackson.workers.dev/update"
-#define DEVICE_ID "Micheal"          // ตั้งชื่อห้ามซ้ำกัน หากใช้หลายๆ บอร์ด
+#define API_ENDPOINT "https://your-worker.workers.dev/update"
+#define DEVICE_ID "ESP32-01"          // อุปกรณ์ ESP32 ตัวนี้ (ไม่ใช่ sensor)
 
-// ----- Sensor -----
-#define INA219_I2C_ADDRESS 0x40        // นี่คือที่อยู่ I2C เริ่มต้นของ  sensor INA219
+// ----- Sensors -----
+// ต้องบัดกรีจุด A0 บนโมดูลตัวที่ 2 เพื่อเปลี่ยน address เป็น 0x41
+// (ตัวแรกปล่อยเป็นค่า default 0x40 ไม่ต้องแก้อะไร)
+#define INA219_1_ADDRESS 0x40
+#define INA219_2_ADDRESS 0x41
+#define SENSOR_1_ID "INA219-01"
+#define SENSOR_2_ID "INA219-02"
 
 // ----- Timing -----
-#define HEARTBEAT_INTERVAL_MS 10000    // (หน่วย ms) จะส่งค่าทุก 10 s แม้ว่าสถานะไม่เปลี่ยน
-#define STATUS_ON_THRESHOLD_MA 20.0    // กระแสไฟฟ้ามากกว่านี้ board จะถือว่า "เปิด" ( หน่วย mA)
+#define HEARTBEAT_INTERVAL_MS 10000    // ส่งค่าทุก 10 วินาที แม้สถานะไม่เปลี่ยน
+#define CURRENT_THRESHOLD_MA 20.0      // กระแสมากกว่านี้ถือว่า "เปิด" (mA)

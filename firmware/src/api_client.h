@@ -1,5 +1,6 @@
 #pragma once
 #include "sensor.h"
 
-// จะคืนค่า true ถ้าเราส่งสำเร็จ (ได้ HTTP Code 2xx กลับมา)
-bool api_sendReading(const SensorReading &reading);
+// ส่ง reading ของ sensor ทั้ง 2 ตัวไปพร้อมกันเป็น 1 request
+// รูปแบบ JSON: { "device_id": "...", "sensors": [ {...}, {...} ] }
+bool api_sendReadings(const SensorReading &reading1, const SensorReading &reading2);
