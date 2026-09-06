@@ -27,7 +27,7 @@ Expansion board เชื่อมต่อกับ ESP32 DevKit ผ่าน p
 kicad expansion-board/expansion-board.kicad_pro
 ```
 
-## ⚠️ ข้อควรระวังเฉพาะส่วนนี้
+## ข้อควรระวังเฉพาะส่วนนี้
 
-- ก่อนสั่งผลิต PCB ตรวจสอบ footprint และ courtyard ให้ไม่ชนกันก่อนทุกครั้ง (DRC check)
-- ไฟล์ backup ของ KiCad (`*-backups/`, `*.kicad_pcb-bak`) ถูกกันไว้ใน `.gitignore` แล้ว ไม่ต้องกังวลเรื่องไฟล์รกใน repo
+- **สำหรับผู้ที่ประสงค์ในการผลิต PCB** ก่อนสั่งผลิต PCB ตรวจสอบ footprint และ courtyard ให้ไม่ชนกันก่อนทุกครั้ง (DRC check)
+- ไฟล์ backup ของ KiCad (`*-backups/`, `*.kicad_pcb-bak`) ถูกกันไว้ใน `.gitignore` แล้ว ไม่ต้องกังวลเรื่องไฟล์รกใน repo ได้เลย

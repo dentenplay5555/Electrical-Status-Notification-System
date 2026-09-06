@@ -30,7 +30,7 @@ cd frontend
 npx wrangler pages deploy .
 ```
 
-## ⚠️ ข้อควรระวังเฉพาะส่วนนี้ (frontend)
+## ข้อควรระวังเฉพาะส่วนนี้ (frontend)
 
 - ตอนนี้ยังไม่ได้ตั้ง custom domain ใช้ `github.io` แบบ default ไปก่อน
 - หน้าเว็บเป็น static file ล้วน **ต้องเรียก API จาก `backend/` เสมอ** ไม่มี logic ประมวลผลฝั่งเว็บเอง

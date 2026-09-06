@@ -12,8 +12,7 @@ void setup() {
     Serial.begin(115200);
     delay(500);
 
-    // ไม่ใช้ if(!sensor_init()) แล้ว halt/loop ค้าง — ให้ทำงานต่อแม้เซนเซอร์ตัวหนึ่งหลุด
-    // (ตรงตาม test matrix: "ถอด #1 → #2 ยังทำงาน" และในทางกลับกัน)
+    // ไม่ใช้ if(!sensor_init()) { while(true); } — ต้องทำงานต่อแม้เซนเซอร์ตัวหนึ่งหลุด
     sensor_init();
 
     wifi_connect();
@@ -35,9 +34,9 @@ void loop() {
         lastSendMs = millis();
     }
 
-    Serial.printf("INA219 #1 %s | INA219 #2 %s\n",
-                  r1.ok ? "OK" : "ERROR",
-                  r2.ok ? "OK" : "ERROR");
+    Serial.printf("INA219 #1 %s (%.1f mA, %s) | INA219 #2 %s (%.1f mA, %s)\n",
+                  r1.ok ? "OK" : "ERROR", r1.current_ma, r1.is_on ? "ON" : "OFF",
+                  r2.ok ? "OK" : "ERROR", r2.current_ma, r2.is_on ? "ON" : "OFF");
 
-    delay(1000);  // สุ่มตัวอย่างค่าทุก 1 วินาที เพื่อจับการเปลี่ยนสถานะได้ไว
+    delay(1000);  // sensor sampling ทุก 1 วิ (ตรงกับ README/spec)
 }

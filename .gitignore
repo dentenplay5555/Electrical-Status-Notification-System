@@ -15,9 +15,9 @@ npm-debug.log*
 # Secrets (สำคัญที่สุด)
 .env
 .env.local
-.firmware/src/config.h
+.firmware/main-src/config.h
+.firmware/testing-src/config.h
 *.env
-firmware/src/config.h.local
 backend/.dev.vars
 
 # Frontend
@@ -42,3 +42,6 @@ docs/picture
 Thumbs.db
 *.swp
 .idea/
+
+# LibreOffice temporary / lock files
+.~lock.*
