@@ -14,7 +14,6 @@ static void addSensorToDoc(JsonArray &sensorsArray, const SensorReading &r) {
     s["is_on"]      = r.is_on;
     s["ok"]         = r.ok;
 }
-
 bool api_sendReadings(const SensorReading &reading1, const SensorReading &reading2) {
     HTTPClient http;
     http.begin(API_ENDPOINT);
@@ -26,7 +25,6 @@ bool api_sendReadings(const SensorReading &reading1, const SensorReading &readin
     JsonArray sensorsArray = doc["sensors"].to<JsonArray>();  // ต้องเป็น array เสมอ
     addSensorToDoc(sensorsArray, reading1);
     addSensorToDoc(sensorsArray, reading2);
-
     String payload;
     serializeJson(doc, payload);
 
