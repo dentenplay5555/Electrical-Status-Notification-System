@@ -3,12 +3,43 @@ import { saveLatestStatus, insertReadings } from "../lib/db";
 import { jsonResponse } from "../lib/cors";
 
 // ----- Auth -----
-// ถ้า DEVICE_TOKEN secret ไม่ได้ตั้งค่าไว้ใน Worker → ข้าม auth (dev/local mode)
-function checkBearerToken(request: Request, env: Env): boolean {
-    if (!env.DEVICE_TOKEN) return true; // ยังไม่ได้ตั้ง secret → ผ่าน (ควรตั้งก่อน deploy)
+// แฮชด้วย SHA-256 ทั้งสองด้านก่อน เพื่อให้ buffer มีความยาว 32 bytes เท่ากันเสมอ
+// ป้องกัน crypto.subtle.timingSafeEqual โยน TypeError เมื่อ token มีความยาวไม่เท่ากัน
+async function safeEqual(a: string, b: string): Promise<boolean> {
+    const enc = new TextEncoder();
+    const [ha, hb] = await Promise.all([
+        crypto.subtle.digest("SHA-256", enc.encode(a)),
+        crypto.subtle.digest("SHA-256", enc.encode(b)),
+    ]);
+    return crypto.subtle.timingSafeEqual(ha, hb);
+}
+
+// ตรวจสอบ Bearer token (fail-closed):
+// - หากตั้ง ALLOW_NO_AUTH=true ใน .dev.vars → ยอมรับทุก request (ใช้เฉพาะ local dev)
+// - หากไม่มี DEVICE_TOKEN บน Worker → ปฏิเสธ (401) เสมอ พร้อม log แจ้งเตือน
+async function checkBearerToken(request: Request, env: Env): Promise<boolean> {
+    if (env.ALLOW_NO_AUTH === "true") {
+        return true;
+    }
+
+    if (!env.DEVICE_TOKEN) {
+        console.error(
+            "[auth] DEVICE_TOKEN is not configured on Worker (fail-closed). " +
+            "Run 'npx wrangler secret put DEVICE_TOKEN' on production, " +
+            "or set ALLOW_NO_AUTH=true in .dev.vars for local development."
+        );
+        return false;
+    }
+
     const auth = request.headers.get("Authorization") ?? "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-    return token === env.DEVICE_TOKEN;
+    if (!auth.startsWith("Bearer ")) {
+        return false;
+    }
+
+    const token = auth.slice(7).trim();
+    if (!token) return false;
+
+    return safeEqual(token, env.DEVICE_TOKEN);
 }
 
 // ----- Payload validation -----
@@ -41,7 +72,7 @@ function isValidPayload(body: unknown): body is DeviceUpdate {
 // ต้องแนบ header: Authorization: Bearer <DEVICE_TOKEN>
 export async function handleUpdate(request: Request, env: Env): Promise<Response> {
     // 1. ตรวจ Bearer token ก่อนอ่าน body
-    if (!checkBearerToken(request, env)) {
+    if (!(await checkBearerToken(request, env))) {
         return jsonResponse({ error: "unauthorized" }, { status: 401 });
     }
 

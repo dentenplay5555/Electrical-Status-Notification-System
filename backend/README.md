@@ -1,6 +1,6 @@
 # backend/ — Cloudflare Worker
 
-รับข้อมูลจาก `firmware/`, เก็บลง DB(Data Base) KV + D1, ให้ `frontend/` อ่านสถานะล่าสุด และส่งสรุปประจำวันเข้า LINE ผ่าน Cron Trigger (ดูภาพรวมทั้งระบบที่ [README หลัก](../README.md))
+รับข้อมูลจาก `firmware/`, เก็บลงฐานข้อมูล Cloudflare D1 (`latest_status` และ `readings`), ให้ `frontend/` อ่านสถานะล่าสุด และส่งสรุปประจำวันเข้า LINE ผ่าน Cron Trigger (ดูภาพรวมทั้งระบบที่ [README หลัก](../README.md))
 
 ## โครงสร้าง
 
@@ -18,9 +18,10 @@ backend/
 
 ## ⚠️ ข้อควรระวังเฉพาะส่วนนี้
 
+- **ต้องตั้ง secret `DEVICE_TOKEN` เสมอ (Fail-Closed Auth)**: Endpoint `POST /update` ตรวจสอบ Bearer token ใน header `Authorization: Bearer <DEVICE_TOKEN>` หากลืมตั้งค่า secret บน Cloudflare Worker หรือค่าไม่ตรง Worker จะตอบ `401 Unauthorized` เสมอ เพื่อป้องกันไม่ให้ endpoint เปิดโล่ง (หากต้องการทดสอบ dev ในเครื่องโดยไม่ตรวจ token ให้ใส่ `ALLOW_NO_AUTH=true` ใน `.dev.vars`)
 - **LOA (LINE Official Account) มี Limit push/pull 300 ครั้ง/เดือน** (แผน Free) — ระวังอย่าทดสอบส่งข้อความถี่เกินไปตอน dev เพราะโควตาจะหมดก่อนสิ้นเดือน แนะนำ `console.log` ดูผ่าน `wrangler tail` แทนการยิงข้อความจริงระหว่างเทส
 - **`.dev.vars` ต้องอยู่โฟลเดอร์เดียวกับ `wrangler.toml` เท่านั้น** (คือ root ของ `backend/`) ย้ายไปที่อื่นจะหาไม่เจอ
-- `database_id` / KV namespace id ใน `wrangler.toml` **ไม่ใช่ความลับ** commit ขึ้น GitHub ได้ปกติ — สิ่งที่ห้าม commit คือ `.dev.vars` (มี token จริง) เท่านั้น
+- `database_id` ใน `wrangler.toml` **ไม่ใช่ความลับ** commit ขึ้น GitHub ได้ปกติ — สิ่งที่ห้าม commit คือ `.dev.vars` (มี token จริง) เท่านั้น
 
 ## Setup
 
@@ -31,7 +32,8 @@ cp .dev.vars.example .dev.vars   # แล้วใส่ค่าจริงใ
 
 npx wrangler d1 create appliance-db     # สร้างฐานข้อมูล D1 ครั้งแรก
 npx wrangler d1 execute appliance-db --file=./schema.sql
-npx wrangler secret put LINE_CHANNEL_ACCESS_TOKEN
+npx wrangler secret put LINE_ACCESS_TOKEN
+npx wrangler secret put DEVICE_TOKEN    # สำคัญ: ต้องใส่ค่าเดียวกันกับใน firmware/main-src/config.h
 npx wrangler deploy
 ```
 

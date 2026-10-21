@@ -7,6 +7,7 @@
 // ----- Backend (Cloudflare Worker) -----
 #define API_ENDPOINT "https://<your-worker>.workers.dev/update"
 #define DEVICE_ID "ESP32-01"
+#define DEVICE_TOKEN "your_secret_device_token"  // ต้องตรงกับ secret บน Worker (wrangler secret put DEVICE_TOKEN)
 // ----- Sensors -----
 // ต้องบัดกรีจุด A0 บนโมดูลตัวที่ 2 เท่านั้น (ตัวแรกปล่อย default)
 #define INA219_1_ADDRESS 0x40

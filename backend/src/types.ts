@@ -6,6 +6,7 @@ export interface Env {
     LINE_CHANNEL_ACCESS_TOKEN?: string;
     LINE_USER_ID?: string;
     DEVICE_TOKEN?: string;          // Bearer token สำหรับ POST /update (wrangler secret put DEVICE_TOKEN)
+    ALLOW_NO_AUTH?: string;         // ตั้งเป็น "true" เฉพาะใน .dev.vars ตอนพัฒนาเพื่อข้ามการตรวจ token
 }
 
 export interface SensorReading {

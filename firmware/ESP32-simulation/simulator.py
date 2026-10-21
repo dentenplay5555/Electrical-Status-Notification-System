@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import random
 import signal
 import time
@@ -287,14 +288,17 @@ class ESP32Simulator:
 
         try:
 
+            headers = {
+                "Content-Type": "application/json",
+            }
+            if self.args.token:
+                headers["Authorization"] = f"Bearer {self.args.token}"
+
             response = self.session.post(
                 self.args.endpoint,
                 json=payload,
                 timeout=self.args.timeout,
-                headers={
-                    "Content-Type":
-                    "application/json"
-                },
+                headers=headers,
             )
 
             if 200 <= response.status_code < 300:
@@ -384,6 +388,10 @@ class ESP32Simulator:
             f"interval : "
             f"{self.args.interval}s"
         )
+        print(
+            f"token    : "
+            f"{'*' * 8 if self.args.token else '(none)'}"
+        )
 
         print(
             "\nPress Ctrl+C to stop.\n"
@@ -433,6 +441,12 @@ def create_parser():
     parser.add_argument(
         "--endpoint",
         default="http://localhost:8787/update",
+    )
+
+    parser.add_argument(
+        "--token",
+        default=os.getenv("DEVICE_TOKEN", ""),
+        help="Bearer token for /update endpoint (defaults to DEVICE_TOKEN env var)",
     )
 
     parser.add_argument(

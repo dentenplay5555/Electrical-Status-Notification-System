@@ -29,13 +29,17 @@ const DEFAULT_CONFIG = {
 };
 ```
 
-2. ทดสอบหรือ Deploy ขึ้น Cloudflare Pages:
+2. **การทดสอบและการ Deploy**:
+- **Production (GitHub Pages)**: โปรเจกต์นี้ตั้งค่า GitHub Actions ([`.github/workflows/deploy-pages.yml`](../.github/workflows/deploy-pages.yml)) ไว้แล้ว เมื่อทำการ push โค้ดในโฟลเดอร์ `frontend/` ไปยัง branch `master` ระบบจะ build และ deploy ขึ้น **GitHub Pages** ให้อัตโนมัติ
+- **Local Testing**: สามารถเปิดทดสอบบนเครื่อง local ด้วย static web server ได้ทันที เช่น:
 ```bash
 cd frontend
-npx wrangler pages deploy .
+python3 -m http.server 3000
+# แล้วเปิดเบราว์เซอร์ไปที่ http://localhost:3000
 ```
+- **ทางเลือกอื่น**: เนื่องจากเป็น Static Files (HTML/CSS/JS) ล้วน จึงสามารถนำไปโฮสต์บน Cloudflare Pages, Vercel, หรือ Web Server ใด ๆ ได้เช่นกัน
 
 ## ข้อควรระวังเฉพาะส่วนนี้ (frontend)
-- หน้าเว็บเป็น Single Page Application แบบ Static Files สามารถ Deploy บน Cloudflare Pages, GitHub Pages หรือ Web Server ใดก็ได้
-- ต้องเรียกข้อมูลผ่าน API จาก `backend/` ซึ่งรองรับ CORS แล้วเรียบร้อย
+- หน้าเว็บเป็น Single Page Application แบบ Static Files ไม่ต้องมี node runtime หรือ build step
+- การดึงข้อมูลเรียกผ่าน API จาก `backend/` ซึ่งเปิดใช้งาน CORS ไว้เรียบร้อยแล้ว
 

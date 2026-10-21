@@ -29,9 +29,10 @@ firmware/
 - ใน `config.h` มีตัวอย่างค่าที่ต้องกรอกไว้แล้ว — คัดลอกโครงจากตัวอย่างในไฟล์แล้วใส่ค่าจริงของตัวเอง **อย่า commit ไฟล์ที่มีค่าจริงขึ้น GitHub**
 
 ```cpp
-#define WIFI_SSID "WIFI NAME"
+#define WIFI_SSID     "WIFI NAME"
 #define WIFI_PASSWORD "WIFI PASS"
-#define API_ENDPOINT "URL"
+#define API_ENDPOINT  "https://<your-worker>.workers.dev/update"
+#define DEVICE_TOKEN  "your_secret_device_token"  // ต้องตรงกับ secret บน Worker
 ```
 
 ## ปัญหาที่เคยเจอ — `ledcAttach` was not declared in this scope

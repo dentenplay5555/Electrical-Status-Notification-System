@@ -39,6 +39,17 @@ export default {
     async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
         const deviceId = "ESP32-01";
         try {
+            // 1. ล้าง readings เก่าเกิน 7 วันก่อนเสมอ (ไม่ขึ้นกับว่าวันนี้มีข้อมูลหรือไม่)
+            try {
+                const deleted = await deleteOldReadings(env, 7);
+                if (deleted > 0) {
+                    console.log(`[scheduled] pruned ${deleted} old readings`);
+                }
+            } catch (pruneErr) {
+                console.error("[scheduled] prune error:", pruneErr);
+            }
+
+            // 2. ดึงสรุปประจำวัน
             const summaryRows = await getTodaySummary(env, deviceId);
 
             const thaiDate = new Intl.DateTimeFormat("th-TH", {
@@ -74,10 +85,6 @@ export default {
 
             text += `\n────────────────\nติดตามสถานะเรียลไทม์ได้ที่หน้าเว็บไซต์แดชบอร์ด`;
             await sendLineMessage(env, text);
-
-            // ล้าง readings เก่าเกิน 7 วัน หลังส่ง LINE เสร็จ
-            const deleted = await deleteOldReadings(env, 7);
-            console.log(`[scheduled] pruned ${deleted} old readings`);
         } catch (err) {
             console.error("[scheduled] error in cron trigger:", err);
         }

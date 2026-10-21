@@ -38,7 +38,7 @@
 ```mermaid
 flowchart LR
     A[ESP32 DevKit] -->|POST ทุก 10s| B[Cloudflare Worker<br/>/update]
-    B --> C[(KV + D1<br/>สถานะล่าสุด + log)]
+    B --> C[(D1 Database<br/>latest_status + readings)]
     C --> D[Website<br/>N/A ถ้าเกิน 30s]
     C --> E[Cron Trigger<br/>09:10 UTC = 16:10 น.]
     E --> F[LINE Messaging API<br/>ส่งสรุปประจำวัน]
@@ -97,6 +97,7 @@ pio run -e testing --target upload
 #define WIFI_SSID     "WIFI NAME"
 #define WIFI_PASSWORD "WIFI PASS"
 #define API_ENDPOINT  "https://<your-worker>.workers.dev/update"
+#define DEVICE_TOKEN  "your_secret_device_token"  // ต้องตรงกับ secret บน Worker
 ```
 
 ### 2. Backend (Cloudflare Worker)
@@ -107,6 +108,7 @@ npm install
 npx wrangler d1 create appliance-db     # สร้าง Database D1 ครั้งแรก
 npx wrangler d1 execute appliance-db --file=./schema.sql
 npx wrangler secret put LINE_ACCESS_TOKEN
+npx wrangler secret put DEVICE_TOKEN    # ใส่ token เดียวกันกับใน config.h (ไม่งั้นจะตอบ 401)
 npx wrangler deploy
 ```
 
