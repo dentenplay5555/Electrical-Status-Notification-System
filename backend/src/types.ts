@@ -1,8 +1,9 @@
 export interface Env {
     LATEST_STATUS: KVNamespace;
     DB: D1Database;
-    LINE_ACCESS_TOKEN: string;
-    LINE_USER_ID: string;
+    LINE_ACCESS_TOKEN?: string;
+    LINE_CHANNEL_ACCESS_TOKEN?: string;
+    LINE_USER_ID?: string;
 }
 
 export interface SensorReading {
@@ -11,7 +12,7 @@ export interface SensorReading {
     current_ma: number;
     power_mw: number;
     is_on: boolean;
-    ok: boolean;   // false ถ้า ESP32 อ่านเซนเซอร์ตัวนี้ไม่ได้
+    ok: boolean; // false ถ้า ESP32 อ่านเซนเซอร์ตัวนี้ไม่ได้
 }
 
 export interface DeviceUpdate {
@@ -20,5 +21,15 @@ export interface DeviceUpdate {
 }
 
 export interface StoredStatus extends DeviceUpdate {
-    updated_at: string;  // ISO timestamp - ใช้คำนวณว่า "หลุดการเชื่อมต่อ" หรือยัง
+    updated_at: string; // ISO timestamp - ใช้คำนวณว่า "หลุดการเชื่อมต่อ" หรือยัง
 }
+
+export interface SensorSummaryRow {
+    sensor_id: string;
+    total_readings: number;
+    on_readings: number;
+    peak_power_mw: number;
+    avg_voltage_v?: number;
+    avg_current_ma?: number;
+}
+

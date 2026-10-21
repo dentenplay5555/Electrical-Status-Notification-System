@@ -19,8 +19,6 @@ npm-debug.log*
 .firmware/testing-src/config.h
 .firmware/ESP32-simulation/.venv
 .firmware/ESP32-simulation/=2.31,
-.firmware/main-src/config.h
-.firmware/testing-src/config.h
 *.env
 backend/.dev.vars
 

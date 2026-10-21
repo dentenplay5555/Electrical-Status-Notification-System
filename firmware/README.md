@@ -13,12 +13,14 @@ firmware/
 |   ├── sensor.cpp/.h      # อ่านค่า INA219
 |   ├── wifi_manager.cpp/.h
 |   └── api_client.cpp/.h  # ส่งข้อมูลไป backend
-└──testing-src
-    ├── i2c_scanner.cpp # สำหรับ test I2C address ว่าใช่หรือไม่
-    ├── config.h          
-    ├── sensor.cpp/.h      
-    ├── wifi_manager.cpp/.h
-    └── api_client.cpp/.h  
+├──testing-src
+|   ├── i2c_scanner.cpp # สำหรับ test I2C address ว่าใช่หรือไม่
+|   ├── config.h          
+|   ├── sensor.cpp/.h      
+|   ├── wifi_manager.cpp/.h
+|   └── api_client.cpp/.h 
+└──ESP32-simulation
+    └──simulator.py
 ```
 
 ## ข้อควรระวังเฉพาะส่วนนี้
@@ -56,7 +58,7 @@ pio run --target compiledb   # สร้าง compile_commands.json ให้ L
 pio run --target upload      # อัปโหลดโค้ดขึ้นบอร์ด
 pio device monitor           # ดู Serial Monitor (Log)
 ```
-
+- และมี folder simulation สำหรับจำลอง ESP32
 ### Linux — ปัญหา `access denied` ตอนอัปโหลดผ่าน USB
 
 ต้องอนุญาตสิทธิ์เข้าถึง serial port ก่อน คำสั่งต่างกันไปตาม distro ตัวอย่างสำหรับ **Fedora**:

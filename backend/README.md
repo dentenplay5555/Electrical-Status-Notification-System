@@ -35,13 +35,25 @@ npx wrangler secret put LINE_CHANNEL_ACCESS_TOKEN
 npx wrangler deploy
 ```
 
+## API Endpoints
+
+| Method | Endpoint | คำอธิบาย |
+|---|---|---|
+| `POST` | `/update` | ESP32 ส่งค่าสถานะ/กระแส/กำลังไฟฟ้า (บันทึกลง KV และ D1 พร้อมกัน) |
+| `GET` | `/status?device_id=ESP32-01` | เว็บไซต์ดึงสถานะล่าสุด (ตอบ `status: "N/A"` เมื่อขาดการติดต่อไปเกิน 30 วินาที) |
+| `GET` | `/health` | ตรวจสอบว่า Worker ทำงานปกติ |
+| `GET` | `/summary?device_id=ESP32-01` | ดึงสถิติรวมของวันนี้ (เวลาไทย) |
+| `GET` | `/history?device_id=ESP32-01&limit=20` | ดึงบันทึกประวัติการวัดค่าย้อนหลัง |
+| `OPTIONS` | `/*` | Preflight CORS Handler สำหรับการเรียกใช้งานข้ามโดเมน |
+
 ## ทดสอบว่า deploy สำเร็จ
 
 ```bash
 curl -i https://your-worker.workers.dev/health
 ```
 
-ควรได้ `{"status":"ok"}` กลับมา
+ควรได้ `{"status":"ok"}` กลับมาพร้อม CORS headers
+
 
 ## Cron Trigger — เรื่อง timezone ที่พลาดง่าย
 

@@ -1,21 +1,225 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="dark">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>สถานะเครื่องใช้ไฟฟ้า</title>
+    <meta name="description"
+        content="ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้าแบบเรียลไทม์ผ่าน ESP32 และ INA219 บน Cloudflare Workers" />
+    <title>สถานะอุปกรณ์ไฟฟ้า — Live Dashboard</title>
+
+    <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
     <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-    <main class="page">
-        <h1>ESP32-01 — สถานะเครื่องใช้ไฟฟ้า</h1>
-        <p class="last-updated">อัปเดตล่าสุด: <span id="last-updated">-</span></p>
+    <!-- Top Progress Bar for Polling Countdown -->
+    <div class="poll-progress-container">
+        <div id="poll-progress-bar" class="poll-progress-bar"></div>
+    </div>
 
-        <div id="sensors" class="sensor-grid">
-            <!-- การ์ดของแต่ละ sensor ถูกสร้างด้วย script.js -->
+    <div class="app-layout">
+        <!-- Header -->
+        <header class="header">
+            <div class="header__brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">Appliance Status Notifier</h1>
+                    <p class="brand-subtitle">ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้าแบบเรียลไทม์</p>
+                </div>
+            </div>
+
+            <div class="header__actions">
+                <!-- Connection Status Pill -->
+                <div id="connection-pill" class="connection-pill connection-pill--connecting"
+                    title="สถานะการเชื่อมต่อกับระบบ">
+                    <span class="status-dot"></span>
+                    <span id="connection-text">กำลังเชื่อมต่อ...</span>
+                </div>
+
+                <!-- Manual Refresh Button -->
+                <button id="refresh-btn" class="icon-button" title="รีเฟรชข้อมูลเดี๋ยวนี้" aria-label="รีเฟรช">
+                    <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+
+                <!-- Theme Toggle Button -->
+                <button id="theme-btn" class="icon-button" title="สลับโหมดมืด / โหมดสว่าง" aria-label="โหมดการแสดงผล">
+                    <svg class="theme-sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="theme-moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- Config Settings Button -->
+                <button id="settings-btn" class="icon-button" title="ตั้งค่าการเชื่อมต่อ API" aria-label="ตั้งค่า">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="page">
+            <!-- Hardware Banner & Meta Info -->
+            <section class="device-banner">
+                <div class="device-banner__info">
+                    <span class="chip-tag">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                            <rect x="9" y="9" width="6" height="6"></rect>
+                            <line x1="9" y1="1" x2="9" y2="4"></line>
+                            <line x1="15" y1="1" x2="15" y2="4"></line>
+                            <line x1="9" y1="20" x2="9" y2="23"></line>
+                            <line x1="15" y1="20" x2="15" y2="23"></line>
+                            <line x1="20" y1="9" x2="23" y2="9"></line>
+                            <line x1="20" y1="14" x2="23" y2="14"></line>
+                            <line x1="1" y1="9" x2="4" y2="9"></line>
+                            <line x1="1" y1="14" x2="4" y2="14"></line>
+                        </svg>
+                        <span id="device-id-label">ESP32-01</span>
+                    </span>
+                    <span class="update-label">
+                        อัปเดตล่าสุด: <strong id="last-updated">-</strong>
+                        <span id="relative-time" class="relative-time"></span>
+                    </span>
+                </div>
+                <div class="device-banner__badge">
+                    <span id="sampling-tag" class="sampling-tag">⚡ Polling: 5s | Stale: 30s</span>
+                </div>
+            </section>
+
+            <!-- Metrics Overview Strip -->
+            <section class="metrics-strip">
+                <div class="metric-card">
+                    <div class="metric-card__header">
+                        <span class="metric-card__title">กำลังไฟฟ้ารวม</span>
+                        <div class="metric-card__icon metric-card__icon--power">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="metric-card__value" id="metric-total-power">0.0 <span class="unit">mW</span></div>
+                    <div class="metric-card__sub" id="metric-total-power-sub">โหลดรวมขณะนี้</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-card__header">
+                        <span class="metric-card__title">กระแสไฟฟ้ารวม</span>
+                        <div class="metric-card__icon metric-card__icon--current">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="metric-card__value" id="metric-total-current">0.0 <span class="unit">mA</span></div>
+                    <div class="metric-card__sub" id="metric-total-current-sub">กระแสใช้งานทั้งหมด</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-card__header">
+                        <span class="metric-card__title">ช่องที่เปิดใช้งาน</span>
+                        <div class="metric-card__icon metric-card__icon--channel">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="metric-card__value" id="metric-active-channels">0 <span class="unit">/ 0</span></div>
+                    <div class="metric-card__sub" id="metric-active-sub">ช่องเซนเซอร์ที่ตรวจพบ</div>
+                </div>
+            </section>
+
+            <!-- Sensor Cards Grid -->
+            <section class="sensors-section">
+                <div class="section-header">
+                    <h2 class="section-title">ช่องวัดค่าเซนเซอร์ (INA219 Channels)</h2>
+                    <span id="active-sensor-count" class="badge-count">0 ช่อง</span>
+                </div>
+
+                <!-- Grid container: matches ID required by original script.js -->
+                <div id="sensors" class="sensor-grid">
+                    <div class="sensor-card sensor-card--loading">
+                        <div class="skeleton skeleton--badge"></div>
+                        <div class="skeleton skeleton--text"></div>
+                        <div class="skeleton skeleton--grid"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>โครงงานการศึกษาค้นคว้าอิสระ (IS) <br>โรงเรียนนครสวรรค์ จังหวัดนครสวรรค์</p>
+            <p class="footer__sub">ESP32 DevKit + INA219 • Cloudflare Worker & D1 Database • LINE Messaging API</p>
+        </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-backdrop" aria-hidden="true">
+        <div class="modal">
+            <div class="modal__header">
+                <h3>⚙️ ตั้งค่าการเชื่อมต่อ (API Configuration)</h3>
+                <button id="modal-close-btn" class="icon-button modal__close" aria-label="ปิด">✕</button>
+            </div>
+            <div class="modal__body">
+                <label for="cfg-api-url" class="form-label">Worker API Endpoint URL:</label>
+                <input type="text" id="cfg-api-url" class="form-input" placeholder="https://your-worker.workers.dev" />
+                <p class="form-help">ค่าเริ่มต้น: Worker บน Cloudflare</p>
+
+                <label for="cfg-device-id" class="form-label" style="margin-top: 14px;">Device ID:</label>
+                <input type="text" id="cfg-device-id" class="form-input" placeholder="ESP32-01" />
+
+                <label for="cfg-poll-interval" class="form-label" style="margin-top: 14px;">ความถี่ในการรีเฟรช
+                    (วินาที):</label>
+                <input type="number" id="cfg-poll-interval" class="form-input" min="2" max="60" value="5" />
+            </div>
+            <div class="modal__footer">
+                <button id="cfg-reset-btn" class="btn btn--secondary">คืนค่าเดิม</button>
+                <button id="cfg-save-btn" class="btn btn--primary">บันทึก & ใช้งาน</button>
+            </div>
         </div>
-    </main>
+    </div>
 
+    <!-- Interactive Cosmic Canvas & Particles -->
+    <script src="space-canvas.js"></script>
+    <!-- Application Logic & Data Polling -->
     <script src="script.js"></script>
 </body>
+
 </html>
