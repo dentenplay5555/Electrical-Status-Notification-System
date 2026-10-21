@@ -3,7 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2026-01-01"
 
 # ----- KV: ถูก replace ด้วย D1 latest_status table แล้ว -----
-# ลบ block นี้ได้เมื่อยืนยันว่า D1 /status ทำงานถูกต้องบน production
+# ลบ block นี้ได้เมื่อยืนยันว่า D1 /status ทำงานถูกต้องบน production (ลบ '#' ออกได้เลย)
 # [[kv_namespaces]]
 # binding = "LATEST_STATUS"
 # id = "8e81e9f0782a48748f11da8b3edbbbcb"

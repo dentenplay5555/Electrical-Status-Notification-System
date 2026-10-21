@@ -1,7 +1,7 @@
 #include "wifi_manager.h"
 #include "config.h"
 #include <WiFi.h>
-
+//wifi connect src file
 void wifi_connect() {
     Serial.printf("[wifi] กำลังเชื่อมต่อ %s", WIFI_SSID);
     WiFi.mode(WIFI_STA);

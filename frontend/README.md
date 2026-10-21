@@ -37,7 +37,7 @@ cd frontend
 python3 -m http.server 3000
 # แล้วเปิดเบราว์เซอร์ไปที่ http://localhost:3000
 ```
-- **ทางเลือกอื่น**: เนื่องจากเป็น Static Files (HTML/CSS/JS) ล้วน จึงสามารถนำไปโฮสต์บน Cloudflare Pages, Vercel, หรือ Web Server ใด ๆ ได้เช่นกัน
+- **ทางเลือกอื่น**: เนื่องจากเป็น Static Files (HTML/CSS/JS) ล้วน จึงสามารถนำไปโฮสต์บน Cloudflare Pages, Vercel, หรือ Web Server ใด ๆ ได้เช่นกัน รวม self-host
 
 ## ข้อควรระวังเฉพาะส่วนนี้ (frontend)
 - หน้าเว็บเป็น Single Page Application แบบ Static Files ไม่ต้องมี node runtime หรือ build step

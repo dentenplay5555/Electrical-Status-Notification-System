@@ -7,7 +7,7 @@ struct SensorReading {
     float current_ma;
     float power_mw;
     bool is_on;
-    bool ok;   // false = อ่านค่าจากเซนเซอร์ตัวนี้ไม่ได้ (หลุด/ต่อผิด)
+    bool ok;   // false = อ่านค่าจากเซนเซอร์ตัวนี้ไม่ได้ (หลุด/ต่อผิด/หาย)
 };
 
 bool sensor_init();

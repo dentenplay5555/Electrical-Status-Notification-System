@@ -621,4 +621,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main() #cp paste cpp มา คนเขียนชิน cpp มากกว่า

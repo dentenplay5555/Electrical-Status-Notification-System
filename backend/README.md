@@ -6,8 +6,8 @@
 
 ```
 backend/
-├── wrangler.toml           # config หลัก: bind KV + D1, ตั้ง cron 09:10 UTC
-├── schema.sql               # โครงตาราง D1
+├── wrangler.toml           # config หลัก: bind KV + D1, ตั้ง cron 09:10 เวลา UTC
+├── schema.sql               # โครงตาราง D1 (SQL);
 ├── .dev.vars.example         # ชื่อตัวแปร secret (ไม่มีค่าจริง)
 └── src/
     ├── index.ts              # entry point: route + cron handler
@@ -18,17 +18,17 @@ backend/
 
 ## ⚠️ ข้อควรระวังเฉพาะส่วนนี้
 
-- **ต้องตั้ง secret `DEVICE_TOKEN` เสมอ (Fail-Closed Auth)**: Endpoint `POST /update` ตรวจสอบ Bearer token ใน header `Authorization: Bearer <DEVICE_TOKEN>` หากลืมตั้งค่า secret บน Cloudflare Worker หรือค่าไม่ตรง Worker จะตอบ `401 Unauthorized` เสมอ เพื่อป้องกันไม่ให้ endpoint เปิดโล่ง (หากต้องการทดสอบ dev ในเครื่องโดยไม่ตรวจ token ให้ใส่ `ALLOW_NO_AUTH=true` ใน `.dev.vars`)
-- **LOA (LINE Official Account) มี Limit push/pull 300 ครั้ง/เดือน** (แผน Free) — ระวังอย่าทดสอบส่งข้อความถี่เกินไปตอน dev เพราะโควตาจะหมดก่อนสิ้นเดือน แนะนำ `console.log` ดูผ่าน `wrangler tail` แทนการยิงข้อความจริงระหว่างเทส
+- **ต้องตั้ง secret `DEVICE_TOKEN` เสมอ (อาจได้ Fail-Closed Auth)**: Endpoint `POST /update` ตรวจสอบ Bearer token ใน header `Authorization: Bearer <DEVICE_TOKEN>` หากลืมตั้งค่า secret บน Cloudflare Worker หรือค่าไม่ตรง Worker จะตอบ `401 Unauthorized` เสมอ เพื่อป้องกันไม่ให้ endpoint เปิดโล่งให้ใครเข้ามาก็ได้ (หากต้องการทดสอบ dev ในเครื่องโดยไม่ตรวจ token ให้ใส่ `ALLOW_NO_AUTH=true` ใน `.dev.vars` ของท่าน)
+- **LOA (LINE Official Account) มี Limit push/pull 300 ครั้ง/เดือน** (แผน Free) ระวังอย่าทดสอบส่งข้อความถี่เกินไปตอน dev เพราะโควตาจะหมดก่อนสิ้นเดือน แนะนำ `console.log` ดูผ่าน `wrangler tail` แทนการยิงข้อความจริงระหว่างเทส
 - **`.dev.vars` ต้องอยู่โฟลเดอร์เดียวกับ `wrangler.toml` เท่านั้น** (คือ root ของ `backend/`) ย้ายไปที่อื่นจะหาไม่เจอ
-- `database_id` ใน `wrangler.toml` **ไม่ใช่ความลับ** commit ขึ้น GitHub ได้ปกติ — สิ่งที่ห้าม commit คือ `.dev.vars` (มี token จริง) เท่านั้น
+- `database_id` ใน `wrangler.toml` **ไม่ใช่ความลับ** commit ขึ้น GitHub ได้ปกติ โดยสิ่งที่ห้าม commit คือ `.dev.vars` (มี token จริง) เท่านั้น
 
 ## Setup
 
 ```bash
 cd backend
-npm install
-cp .dev.vars.example .dev.vars   # แล้วใส่ค่าจริงใน .dev.vars
+npm install #ต้องมี node.js ครอบจักรวาล installed;
+cp .dev.vars.example .dev.vars   # แล้วใส่ค่าจริงใน .dev.vars ของท่าน (linux ใช้ "cp" window ใช้ "copy")
 
 npx wrangler d1 create appliance-db     # สร้างฐานข้อมูล D1 ครั้งแรก
 npx wrangler d1 execute appliance-db --file=./schema.sql
@@ -51,15 +51,15 @@ npx wrangler deploy
 ## ทดสอบว่า deploy สำเร็จ
 
 ```bash
-curl -i https://your-worker.workers.dev/health
+curl -i https://--your_worker_name--.dev/health
 ```
 
-ควรได้ `{"status":"ok"}` กลับมาพร้อม CORS headers
+ควร return `{"status":"ok"}` กลับมาพร้อม CORS headers
 
 
 ## Cron Trigger — เรื่อง timezone ที่พลาดง่าย
 
-Cloudflare Cron ใช้เวลา **UTC เท่านั้น** ไม่ใช่เวลาไทย ถ้าจะให้ทำงานตอน 16:10 น. เวลาไทย ต้องตั้งเป็น `09:10 UTC` (ไทยเร็วกว่า UTC 7 ชั่วโมง):
+Cloudflare Cron จะใช้เวลา **UTC เท่านั้น** ไม่ใช่เวลาไทย ถ้าจะให้ทำงานตอน 16:10 น. เวลาไทย ต้องตั้งเป็น `09:10 UTC` (โดยไทยเร็วกว่า UTC 7 ชั่วโมง):
 
 ```toml
 [triggers]
@@ -72,7 +72,7 @@ crons = ["10 9 * * *"]  # 09:10 UTC = 16:10 น. เวลาไทย
 
 **วิธีตรวจ**:
 ```bash
-npx wrangler deploy               # deploy ใหม่ให้ชัวร์
+npx wrangler deploy               # deploy ใหม่เอาให้ชัวร์
 curl -i -X POST https://your-worker.workers.dev/webhook \
   -H "Content-Type: application/json" -d '{"events":[]}'
 ```

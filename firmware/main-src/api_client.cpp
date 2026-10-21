@@ -2,8 +2,7 @@
 #include "config.h"
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-
-// จุดตรวจ priority 4: field ที่ใส่ตรงนี้ต้องตรงกับชื่อใน SensorReading (sensor.h)
+// จุดตรวจ priority 4: field ที่ใส่ตรงนี้ต้องตรงกับชื่อใน SensorReading (sensor.h) at line 24
 // และตรงกับ backend/types.ts (SensorReading interface) แบบ 1:1 ทุกตัว
 static void addSensorToDoc(JsonArray &sensorsArray, const SensorReading &r) {
     JsonObject s = sensorsArray.add<JsonObject>();
@@ -23,7 +22,7 @@ bool api_sendReadings(const SensorReading &reading1, const SensorReading &readin
 
     JsonDocument doc;
     doc["device_id"] = DEVICE_ID;   // ต้องตรงกับ backend validate: device_id (string)
-    JsonArray sensorsArray = doc["sensors"].to<JsonArray>();  // ต้องเป็น array เสมอ
+    JsonArray sensorsArray = doc["sensors"].to<JsonArray>();  // ต้องเป็น array 1D เสมอ;
     addSensorToDoc(sensorsArray, reading1);
     addSensorToDoc(sensorsArray, reading2);
     String payload;

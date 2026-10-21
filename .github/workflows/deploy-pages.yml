@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
     paths:
-      - "frontend/**"       # รันเฉพาะตอนแก้ไฟล์ในโฟลเดอร์ frontend เท่านั้น
+      - "frontend/**"        # รันเฉพาะตอนแก้ไฟล์ในโฟลเดอร์สำหรับ frontend เท่านั้น
   workflow_dispatch:          # กดรันเองได้จากแท็บ Actions ด้วย
 
 permissions:

@@ -1,6 +1,6 @@
 # firmware/ — โค้ด ESP32
 
-อ่านค่ากระแส/แรงดัน/กำลังไฟฟ้าจากเซนเซอร์ INA219 แล้วส่งเข้า `backend/` ผ่าน HTTP POST ทุก 10 วินาที (ดูภาพรวมทั้งระบบที่ [README หลัก](../README.md))
+อ่านค่ากระแส/แรงดัน/กำลังไฟฟ้าจากเซนเซอร์ INA219 แล้วส่งเข้า `backend/` ผ่าน HTTP POST ทุก 10 วินาที (ดูภาพรวมทั้งระบบที่ [README หลัก](../README.md)) ทั้งหมดนี้ใช้ Platform IO (pio) ทั้งหมด
 
 ## โครงสร้าง
 
@@ -32,7 +32,7 @@ firmware/
 #define WIFI_SSID     "WIFI NAME"
 #define WIFI_PASSWORD "WIFI PASS"
 #define API_ENDPOINT  "https://<your-worker>.workers.dev/update"
-#define DEVICE_TOKEN  "your_secret_device_token"  // ต้องตรงกับ secret บน Worker
+#define DEVICE_TOKEN  "your_secret_device_token"  // ต้องตรงกับ secret บน Worker ด้วย
 ```
 
 ## ปัญหาที่เคยเจอ — `ledcAttach` was not declared in this scope
@@ -55,7 +55,7 @@ lib_deps =
 
 ```bash
 cd firmware
-pio run --target compiledb   # สร้าง compile_commands.json ให้ LSP (เช่น clangd ใน LazyVim) รู้จัก library
+pio run --target compiledb   # สร้าง compile_commands.json ให้ LSP (เช่น clangd ใน LazyVim) ให้รู้จัก library
 pio run --target upload      # อัปโหลดโค้ดขึ้นบอร์ด
 pio device monitor           # ดู Serial Monitor (Log)
 ```

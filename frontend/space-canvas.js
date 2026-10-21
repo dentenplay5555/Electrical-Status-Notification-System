@@ -1,8 +1,7 @@
 /**
  * Cosmic Interactive Starfield & Celestial Physics
- * ระบบอวกาศและดาวแบบโต้ตอบได้ (Stars, Constellations, Gravity, Black Hole & Big Bang)
- */
-
+ * ระบบอวกาศและดาวแบบโต้ตอบได้ (Stars, Constellations, Gravity, Black Hole & Big Bang) เอาจริงๆ ไม่มีประโยชน์ไรเลย ให้ดูดีขี้นเฉย;
+ */ 
 (function () {
     const canvas = document.createElement("canvas");
     canvas.id = "space-canvas";
