@@ -9,7 +9,7 @@ docs/
 ├── report/
 │   └── IS-report.odt      # เล่มรายงาน IS ฉบับเต็ม
 ├── diagrams/               # diagram ที่ใช้อธิบายเพิ่มเติมจากเล่มโครงงาน
-└── unoffical document       # ไฟล์เพิ่มเติมจากรูปเเล่มจริง
+└── unofficial-documents/    # ไฟล์เพิ่มเติมจากรูปเล่มจริง
 ```
 
 ## หมายเหตุ

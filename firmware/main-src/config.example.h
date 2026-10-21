@@ -1,11 +1,12 @@
 #pragma once
-
 // ----- Wi-Fi -----
+// คัดลอกไฟล์นี้เป็น config.h แล้วใส่ค่าจริงของท่าน
+// DO NOT commit config.h — ถูก ignore ใน .gitignore แล้ว
 #define WIFI_SSID "your-wifi-name"
 #define WIFI_PASSWORD "your-wifi-password"
 
 // ----- Backend (Cloudflare Worker) -----
-#define API_ENDPOINT "https://appliance-notifier-backend.benten012555.workers.dev/update"
+#define API_ENDPOINT "https://<your-worker>.workers.dev/update"
 #define DEVICE_ID "ESP32-01"
 
 // ----- Sensors -----
@@ -16,9 +17,9 @@
 #define SENSOR_2_ID "INA219-02"
 
 // ----- Timing -----
-#define HEARTBEAT_INTERVAL_MS 10000   // upload ทุก 10 วิ (ตรงกับ README/spec)
+#define HEARTBEAT_INTERVAL_MS 10000 // upload ทุก 10 วิ
 
 // ----- Threshold (hysteresis 2 ขอบ กัน state กระพริบ) -----
-// ค่าประมาณเริ่มต้น — priority 5 ต้องวัดจริงกับโหลดจริงแล้วปรับค่านี้
+// ค่าประมาณเริ่มต้น — ต้องวัดจริงกับโหลดจริงแล้วปรับค่านี้
 #define CURRENT_ON_THRESHOLD_MA 25.0
 #define CURRENT_OFF_THRESHOLD_MA 15.0

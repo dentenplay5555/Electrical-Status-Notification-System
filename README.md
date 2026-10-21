@@ -1,6 +1,6 @@
 # Appliance Status Notifier (ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้า)
 
-ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้าโดยทีเวลาใกล้เคียง 0 ms -> 50 ms ด้วย ESP32 ร่วมด้วย INA219 ส่งข้อมูลผ่าน Cloudflare Worker นำไปแสดงสถานะบนเว็บไซต์ และแจ้งเตือนสรุปประจำวันผ่าน LINE Messaging API ผ่าน LOA(Line Offical Account) ทุกวันเวลา 16:10 น. โดยมีจุดประสงค์เป็นแนวทางการพัฒนาและต่อยอดเพิ่มขึ้นได้เรื่อยๆ ในด้านที่ท่านต้องการ<br>
+ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้าโดยตรวจจับกระแสไฟฟ้าแบบ near-realtime ด้วย ESP32 ร่วมกับ INA219 ส่งข้อมูลผ่าน Cloudflare Worker นำไปแสดงสถานะบนเว็บไซต์ และแจ้งเตือนสรุปประจำวันผ่าน LINE Messaging API ผ่าน LOA (Line Official Account) ทุกวันเวลา 16:10 น. โดยมีจุดประสงค์เป็นแนวทางการพัฒนาและต่อยอดเพิ่มขึ้นได้เรื่อยๆ ในด้านที่ท่านต้องการ<br>
 ----------
 **รายละเอียดเพิ่มเติมสามารถดูได้ที่ folder ย่อยๆ หรือ documentation ข้างต้น**
 
@@ -8,7 +8,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-ESP32-informational)
-![Build](https://img.shields.io/badge/build-passing-brightgreen)
+[![Deploy frontend to GitHub Pages](https://github.com/dentenplay5555/Electrical-Status-Notification-System/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dentenplay5555/Electrical-Status-Notification-System/actions/workflows/deploy-pages.yml)
 
 ---
 
@@ -31,13 +31,13 @@
 
 ## ภาพรวมระบบ
 
-ระบบนี้ตรวจจับสถานะเปิด/ปิดของอุปกรณ์ไฟฟ้า DC (3-9V) โดยวัดกระแสไฟฟ้าผ่านเซนเซอร์ INA219 ประมวลผลด้วย ESP32 แล้วส่งข้อมูลไปเก็บและแสดงผล ผ่าน Cloudflare Worker ใกล้เคียงเรียลไทม์(ms) พร้อมสรุปแจ้งเตือนผ่าน Line Offical Account(LOA) และ website ทุกวันเวลา 16:10 น.
+ระบบนี้ตรวจจับสถานะเปิด/ปิดของอุปกรณ์ไฟฟ้า DC (3-9V) โดยวัดกระแสไฟฟ้าผ่านเซนเซอร์ INA219 ประมวลผลด้วย ESP32 แล้วส่งข้อมูลไปเก็บและแสดงผล ผ่าน Cloudflare Worker ใกล้เคียงเรียลไทม์ พร้อมสรุปแจ้งเตือนผ่าน Line Official Account (LOA) และ website ทุกวันเวลา 16:10 น.
 
 ## สถาปัตยกรรม หรือ หลักการทำงาน
 
 ```mermaid
 flowchart LR
-    A[ESP32 DevKit] -->|POST ทุก 10-15s| B[Cloudflare Worker<br/>/update]
+    A[ESP32 DevKit] -->|POST ทุก 10s| B[Cloudflare Worker<br/>/update]
     B --> C[(KV + D1<br/>สถานะล่าสุด + log)]
     C --> D[Website<br/>N/A ถ้าเกิน 30s]
     C --> E[Cron Trigger<br/>09:10 UTC = 16:10 น.]
@@ -49,7 +49,7 @@ flowchart LR
 - ตรวจจับสถานะเปิด/ปิดอุปกรณ์ไฟฟ้า ได้ทุกที่ ทุกเวลา
 - วัดกระแส/แรงดัน/กำลังไฟฟ้าผ่าน INA219
 - แสดงผลผ่านเว็บไซต์ พร้อมสถานะ `N/A` เมื่อ ESP32 หลุดการเชื่อมต่อ
-- ป้องกันการเกิด ภาวะข้อมูลแกว่งระหว่าง 19 - 21 โดยมีจุดตรวจสอบเป็น 20
+- ป้องกันการเกิดภาวะข้อมูลแกว่ง (hysteresis) โดยมีเกณฑ์เปิด 25 mA / ปิด 15 mA
 - แจ้งเตือนสรุปประจำวันผ่าน LINE Messaging API เวลา 16:10 น.
 - บันทึกประวัติการใช้งานย้อนหลังผ่าน Cloudflare D1
 
@@ -73,26 +73,30 @@ appliance-notifier/
 | Expansion Board | บอร์ดเชื่อมต่อเซนเซอร์ + LED + สวิตช์เลือกแรงดัน |
 
 ## วิธีการเริ่มต้นใช้งาน
-**มีความจำเป็นที่จะต้องติดตั้ง Platform IO CLI, Node.js และ LOA จึงมีสืทธิใช้ Line Messaging Api ได้โดยมี Limit push/pull คือ 300 ครั้ง**
-**ข้อควรระวังสำหรัับผู้ใช้ Linux การ upload code ผ่าน USB อาจเจอ error "access denied" ได้ ควรอนุญาติผ่าน serial ของ port ที่ท่านมีความประสงค์ใช้ การอนุญาติสามารถมี command ได้มากจากการมี distro แตกต่างกันจึงไม่สามารถแนะนำได้**
+**มีความจำเป็นที่จะต้องติดตั้ง PlatformIO CLI, Node.js และ LOA จึงมีสิทธิใช้ Line Messaging API ได้โดยมี Limit push คือ 200 ครั้ง/เดือน (Free tier)**
+**ข้อควรระวังสำหรับผู้ใช้ Linux การ upload code ผ่าน USB อาจเจอ error "access denied" ได้ ควรอนุญาตผ่าน serial port ที่ท่านประสงค์ใช้**
 
 ### 1. Firmware (ESP32)
 
 ```bash
 cd firmware
-pio run --target compiledb   # สร้าง compile_commands.json สำหรับ LSP
-pio run --target upload      # อัปโหลดโค้ดขึ้นบอร์ด
-pio device monitor           # ดู Serial Monitor (Log)
+# คัดลอก template config แล้วใส่ค่าจริง (ไฟล์นี้ถูก ignore แล้ว — ไม่ขึ้น git)
+cp main-src/config.example.h main-src/config.h
+# แก้ไข main-src/config.h ด้วย editor ของท่าน
+
+pio run -e main --target compiledb   # สร้าง compile_commands.json สำหรับ LSP
+pio run -e main --target upload      # อัปโหลดโค้ดขึ้นบอร์ด (main env)
+pio device monitor                   # ดู Serial Monitor (Log)
+# สำหรับทดสอบ i2c_scanner:
+pio run -e testing --target upload
 ```
 
-สามารถตั้งค่า Wi-Fi และ URL ของ Worker ในไฟล์ `firmware/src/config.h` โดยมีตัวอย่างภายใน File
-**ไม่สามาถใช้ WiFi ชนิด login ใน website**<br>
-**ใน .env.example ท่านควรนำไปเป็นตัวอย่างในการปรับแต่ง config.h ใน project ของท่าน**
+ค่าที่ต้องแก้ใน `firmware/main-src/config.h`:
 
 ```cpp
-#define WIFI_SSID "WIFI NAME"
+#define WIFI_SSID     "WIFI NAME"
 #define WIFI_PASSWORD "WIFI PASS"
-#define API_ENDPOINT "URL"
+#define API_ENDPOINT  "https://<your-worker>.workers.dev/update"
 ```
 
 ### 2. Backend (Cloudflare Worker)
@@ -100,7 +104,7 @@ pio device monitor           # ดู Serial Monitor (Log)
 ```bash
 cd backend
 npm install
-npx wrangler d1 create appliance-db     # สร้าง Data base D1 ครั้งแรก
+npx wrangler d1 create appliance-db     # สร้าง Database D1 ครั้งแรก
 npx wrangler d1 execute appliance-db --file=./schema.sql
 npx wrangler secret put LINE_ACCESS_TOKEN
 npx wrangler deploy
@@ -108,10 +112,14 @@ npx wrangler deploy
 
 ### 3. Frontend (เว็บแสดงสถานะ)
 
+Frontend เป็น static HTML/CSS/JS ใน `frontend/` — deploy อัตโนมัติผ่าน GitHub Actions ไปยัง **GitHub Pages** ทุกครั้งที่ push ไปยัง branch `master`
+
 ```bash
-cd frontend
-# แก้ API_URL ใน script.js ให้ตรงกับ Worker ของท่านที่ deploy แล้ว
-npx wrangler pages deploy .
+# แก้ API_URL ใน frontend/script.js ให้ตรงกับ Worker ของท่าน
+# จากนั้น push ไปที่ branch master — workflow จะ deploy ให้อัตโนมัติ
+git add frontend/
+git commit -m "update frontend"
+git push origin master
 ```
 
 ## API Endpoints 
@@ -136,8 +144,8 @@ npx wrangler pages deploy .
    2.ครูสุพรรณี อภิชัยเอนก<br>
    3.ครูธันยาณัฐ รังสิยานนท์<br>
    
-**โครงงานการศึกษาค้นคว้าอิสระ (Independent Study(IS)) ประจำภาคเรียนที่ 1 ปีการศึกษา 2569 <br>โรงเรียนนครสวรรค์ อำเภอเมืองนครสวรรค์ จังหวัดนครสวรรค์**
+**โครงงานการศึกษาค้นคว้าอิสระ (Independent Study (IS)) ประจำภาคเรียนที่ 1 ปีการศึกษา 2569 <br>โรงเรียนนครสวรรค์ อำเภอเมืองนครสวรรค์ จังหวัดนครสวรรค์**
 
 ## License
 
-โครงงานนี้เผยแพร่ภายใต้สัญญาอนุญาต [MIT License](LICENSE)
+โครงงานนี้เผยแพร่ภายใต้สัญญาอนุญาต [MIT License](LICENSE.txt)

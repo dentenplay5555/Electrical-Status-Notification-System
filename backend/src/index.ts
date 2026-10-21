@@ -4,7 +4,7 @@ import { handleStatus } from "./routes/status";
 import { handleHealth } from "./routes/health";
 import { handleSummary, handleHistory } from "./routes/metrics";
 import { handleOptions, jsonResponse } from "./lib/cors";
-import { getTodaySummary } from "./lib/db";
+import { getTodaySummary, deleteOldReadings } from "./lib/db";
 import { sendLineMessage } from "./lib/line";
 
 export default {
@@ -74,6 +74,10 @@ export default {
 
             text += `\n────────────────\nติดตามสถานะเรียลไทม์ได้ที่หน้าเว็บไซต์แดชบอร์ด`;
             await sendLineMessage(env, text);
+
+            // ล้าง readings เก่าเกิน 7 วัน หลังส่ง LINE เสร็จ
+            const deleted = await deleteOldReadings(env, 7);
+            console.log(`[scheduled] pruned ${deleted} old readings`);
         } catch (err) {
             console.error("[scheduled] error in cron trigger:", err);
         }

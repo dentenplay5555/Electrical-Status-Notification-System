@@ -1,31 +1,46 @@
 import type { Env, DeviceUpdate, StoredStatus, SensorSummaryRow } from "../types";
 
-// ----- KV: เก็บ "สถานะล่าสุด" ทั้งก้อน (device + sensors[]) อ่านเร็ว ใช้กับ /status -----
+// ----- D1: สถานะล่าสุด (แทน KV) -----
+// upsert ทุก heartbeat (~10s) — 1 row ต่อ device_id เท่านั้น
 export async function saveLatestStatus(env: Env, update: DeviceUpdate): Promise<void> {
-    const stored: StoredStatus = {
-        ...update,
-        updated_at: new Date().toISOString(),
-    };
-    await env.LATEST_STATUS.put(update.device_id, JSON.stringify(stored));
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+        `INSERT INTO latest_status (device_id, sensors_json, updated_at) VALUES (?, ?, ?)
+         ON CONFLICT(device_id) DO UPDATE SET
+             sensors_json = excluded.sensors_json,
+             updated_at   = excluded.updated_at`
+    )
+        .bind(update.device_id, JSON.stringify(update.sensors), now)
+        .run();
 }
 
 export async function getLatestStatus(env: Env, deviceId: string): Promise<StoredStatus | null> {
-    const raw = await env.LATEST_STATUS.get(deviceId);
-    if (!raw) return null;
+    const row = await env.DB.prepare(
+        `SELECT device_id, sensors_json, updated_at FROM latest_status WHERE device_id = ?`
+    )
+        .bind(deviceId)
+        .first<{ device_id: string; sensors_json: string; updated_at: string }>();
+
+    if (!row) return null;
     try {
-        return JSON.parse(raw) as StoredStatus;
+        return {
+            device_id: row.device_id,
+            sensors: JSON.parse(row.sensors_json),
+            updated_at: row.updated_at,
+        } as StoredStatus;
     } catch {
         return null;
     }
 }
 
-// ----- D1: บันทึกทุก reading ของทุกเซนเซอร์ลงตาราง readings (ประวัติ ใช้สรุปรายวัน) -----
+// ----- D1: บันทึกทุก reading + upsert devices (sensors upsert เฉพาะ INSERT ใหม่) -----
+// ลด D1 writes: sensor upsert ข้ามไปถ้ามีอยู่แล้ว (INSERT OR IGNORE) — ประหยัด ~2 writes/request
 export async function insertReadings(env: Env, update: DeviceUpdate): Promise<void> {
     const now = new Date().toISOString();
 
     const statements: D1PreparedStatement[] = [];
 
-    // 1. Upsert ตาราง devices
+    // 1. Upsert ตาราง devices (last_seen ทุก heartbeat)
     statements.push(
         env.DB.prepare(
             `INSERT INTO devices (device_id, last_seen) VALUES (?, ?)
@@ -33,12 +48,11 @@ export async function insertReadings(env: Env, update: DeviceUpdate): Promise<vo
         ).bind(update.device_id, now)
     );
 
-    // 2. Upsert ตาราง sensors และ Insert ตาราง readings
+    // 2. sensors: INSERT OR IGNORE (ไม่เขียนซ้ำถ้ามีอยู่แล้ว) + readings ทุกครั้ง
     for (const s of update.sensors) {
         statements.push(
             env.DB.prepare(
-                `INSERT INTO sensors (sensor_id, device_id, name) VALUES (?, ?, ?)
-                 ON CONFLICT(sensor_id) DO UPDATE SET device_id = excluded.device_id`
+                `INSERT OR IGNORE INTO sensors (sensor_id, device_id, name) VALUES (?, ?, ?)`
             ).bind(s.sensor_id, update.device_id, s.sensor_id)
         );
 
@@ -106,4 +120,16 @@ export async function getRecentReadings(env: Env, deviceId: string, limit = 20) 
         .all();
 
     return result.results ?? [];
+}
+
+// ----- ล้าง readings เก่า (เรียกจาก cron หรือ manual) -----
+// ควร schedule ทุกวันหลังส่ง LINE summary เพื่อป้องกัน D1 ล้นโควตา
+export async function deleteOldReadings(env: Env, keepDays = 7): Promise<number> {
+    const cutoff = new Date(Date.now() - keepDays * 24 * 60 * 60 * 1000).toISOString();
+    const result = await env.DB.prepare(
+        `DELETE FROM readings WHERE created_at < ?`
+    )
+        .bind(cutoff)
+        .run();
+    return result.meta.changes ?? 0;
 }

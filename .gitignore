@@ -15,10 +15,10 @@ npm-debug.log*
 # Secrets (สำคัญที่สุด)
 .env
 .env.local
-.firmware/main-src/config.h
-.firmware/testing-src/config.h
-.firmware/ESP32-simulation/.venv
-.firmware/ESP32-simulation/=2.31,
+firmware/main-src/config.h
+firmware/testing-src/config.h
+firmware/ESP32-simulation/.venv
+firmware/ESP32-simulation/=2.31,
 *.env
 backend/.dev.vars
 
@@ -27,6 +27,7 @@ frontend/node_modules/
 frontend/dist/
 
 # Hardware (KiCad)
+hardware/.history/
 hardware/**/*-backups/
 hardware/**/*.kicad_pcb-bak
 hardware/**/*.kicad_sch-bak

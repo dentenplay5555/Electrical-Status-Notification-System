@@ -18,6 +18,7 @@ bool api_sendReadings(const SensorReading &reading1, const SensorReading &readin
     HTTPClient http;
     http.begin(API_ENDPOINT);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("Authorization", "Bearer " DEVICE_TOKEN);
     http.setTimeout(5000);
 
     JsonDocument doc;

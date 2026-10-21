@@ -1,9 +1,11 @@
 export interface Env {
-    LATEST_STATUS: KVNamespace;
+    // KV ถูก replace ด้วย D1 latest_status table แล้ว — ลบ binding ออกจาก wrangler.toml ได้เมื่อพร้อม
+    // LATEST_STATUS: KVNamespace;
     DB: D1Database;
     LINE_ACCESS_TOKEN?: string;
     LINE_CHANNEL_ACCESS_TOKEN?: string;
     LINE_USER_ID?: string;
+    DEVICE_TOKEN?: string;          // Bearer token สำหรับ POST /update (wrangler secret put DEVICE_TOKEN)
 }
 
 export interface SensorReading {
@@ -32,4 +34,3 @@ export interface SensorSummaryRow {
     avg_voltage_v?: number;
     avg_current_ma?: number;
 }
-

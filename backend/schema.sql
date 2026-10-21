@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS sensors (
     name        TEXT
 );
 
--- ค่าที่วัดได้ทุกครั้งที่ ESP32 ส่งเข้ามา (ทั้ง heartbeat และตอนสถานะเปลี่ยน)
+-- ค่าที่วัดได้ทุกครั้งที่ ESP32 ส่งเข้ามา (heartbeat ทุก 10 วินาที)
 CREATE TABLE IF NOT EXISTS readings (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     device_id   TEXT NOT NULL,
@@ -27,3 +27,11 @@ CREATE TABLE IF NOT EXISTS readings (
 
 CREATE INDEX IF NOT EXISTS idx_readings_device_time ON readings (device_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_readings_sensor_time ON readings (sensor_id, created_at);
+
+-- สถานะล่าสุดต่อ device (แทน KV) — upsert ทุก heartbeat, ใช้กับ /status
+-- เก็บ sensors[] เป็น JSON string เพื่อให้ query ง่ายโดยไม่ต้อง JOIN
+CREATE TABLE IF NOT EXISTS latest_status (
+    device_id   TEXT PRIMARY KEY,
+    sensors_json TEXT NOT NULL,    -- JSON array ของ SensorReading[]
+    updated_at  TEXT NOT NULL      -- ISO timestamp (UTC) ใช้คำนวณ N/A (> 30s)
+);

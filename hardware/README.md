@@ -6,11 +6,12 @@
 
 ```
 hardware/
-└── expansion-board/
-    ├── expansion-board.kicad_pro
-    ├── expansion-board.kicad_sch
-    └── expansion-board.kicad_pcb
+├── Circut.kicad_pro
+├── Circut.kicad_sch
+└── Circut.kicad_pcb
 ```
+
+> **หมายเหตุ:** ชื่อไฟล์ `Circut` เป็นชื่อที่ตั้งไว้ตอนสร้างโปรเจกต์ (สะกดผิดจาก "Circuit") — ยังไม่ได้เปลี่ยนเพื่อหลีกเลี่ยง broken reference ใน KiCad
 
 ## รายละเอียดวงจร
 
@@ -24,10 +25,10 @@ Expansion board เชื่อมต่อกับ ESP32 DevKit ผ่าน p
 ## เปิดไฟล์
 
 ```bash
-kicad expansion-board/expansion-board.kicad_pro
+kicad hardware/Circut.kicad_pro
 ```
 
 ## ข้อควรระวังเฉพาะส่วนนี้
 
 - **สำหรับผู้ที่ประสงค์ในการผลิต PCB** ก่อนสั่งผลิต PCB ตรวจสอบ footprint และ courtyard ให้ไม่ชนกันก่อนทุกครั้ง (DRC check)
-- ไฟล์ backup ของ KiCad (`*-backups/`, `*.kicad_pcb-bak`) ถูกกันไว้ใน `.gitignore` แล้ว ไม่ต้องกังวลเรื่องไฟล์รกใน repo ได้เลย
+- ไฟล์ backup ของ KiCad (`*-backups/`, `*.kicad_pcb-bak`) และโฟลเดอร์ `.history/` ถูกกันไว้ใน `.gitignore` แล้ว ไม่ต้องกังวลเรื่องไฟล์รกใน repo ได้เลย

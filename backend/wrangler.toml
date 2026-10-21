@@ -2,12 +2,13 @@ name = "appliance-notifier-backend"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
 
-# ----- KV: เก็บ "สถานะล่าสุด" อ่านเร็วสุด สำหรับ endpoint /status -----
-[[kv_namespaces]]
-binding = "LATEST_STATUS"
-id = "8e81e9f0782a48748f11da8b3edbbbcb"
+# ----- KV: ถูก replace ด้วย D1 latest_status table แล้ว -----
+# ลบ block นี้ได้เมื่อยืนยันว่า D1 /status ทำงานถูกต้องบน production
+# [[kv_namespaces]]
+# binding = "LATEST_STATUS"
+# id = "8e81e9f0782a48748f11da8b3edbbbcb"
 
-# ----- D1: เก็บ log ประวัติเหตุการณ์ทั้งหมด สำหรับสรุปรายวัน -----
+# ----- D1: เก็บ log ประวัติ + latest_status แทน KV -----
 [[d1_databases]]
 binding = "DB"
 database_name = "appliance-db"
