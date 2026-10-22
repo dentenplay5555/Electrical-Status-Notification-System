@@ -1,6 +1,5 @@
 # คัดลอกไฟล์นี้เป็น .dev.vars แล้วใส่ค่าจริง (ไม่ต้อง commit .dev.vars)
 LINE_ACCESS_TOKEN=your_line_token_here
 DEVICE_TOKEN=your_secret_device_token_here
-
 # ตัวเลือกเสริม: ใส่ ALLOW_NO_AUTH=true หากต้องการทดสอบ dev ในเครื่องโดยไม่ต้องส่ง Authorization Bearer token
 # ALLOW_NO_AUTH=true

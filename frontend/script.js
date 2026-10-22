@@ -2,14 +2,12 @@
  * Appliance Status Notifier — Frontend Client
  * ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้าแบบเรียลไทม์
  */
-
 const DEFAULT_CONFIG = {
     apiUrl: "https://appliance-notifier-backend.benten012555.workers.dev",
-    deviceId: "ESP32-01",
+    deviceId: "TM-Opera-O",
     pollIntervalMs: 5000,
 };
-
-// อ่านค่า config จาก localStorage หรือใช้ค่าเริ่มต้น
+// อ่านค่า config จาก localStorage หรือไม่ก็ใช้ค่าเริ่มต้น
 function loadConfig() {
     return {
         apiUrl: localStorage.getItem("asn_api_url") || DEFAULT_CONFIG.apiUrl,
@@ -17,9 +15,7 @@ function loadConfig() {
         pollIntervalMs: parseInt(localStorage.getItem("asn_poll_interval"), 10) || DEFAULT_CONFIG.pollIntervalMs,
     };
 }
-
 let config = loadConfig();
-
 // DOM Elements
 const sensorsEl = document.getElementById("sensors");
 const lastUpdatedEl = document.getElementById("last-updated");
