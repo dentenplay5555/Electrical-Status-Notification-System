@@ -263,11 +263,10 @@ function renderOfflineNotice(lastSeen) {
 }
 
 function renderSensorCards(sensors) {
-    // ลบการ์ด offline notice ถ้ามีอยู่
-    const noticeEl = sensorsEl.querySelector(".sensor-card--offline-notice");
-    if (noticeEl) {
-        sensorsEl.innerHTML = "";
-    }
+    // ลบการ์ดที่ไม่ใช่เซนเซอร์จริง เช่น offline notice หรือ loading skeleton
+    sensorsEl.querySelectorAll(".sensor-card:not([data-sensor-id])").forEach((el) => {
+        el.remove();
+    });
 
     const currentCardMap = new Map();
     sensorsEl.querySelectorAll(".sensor-card[data-sensor-id]").forEach((el) => {
