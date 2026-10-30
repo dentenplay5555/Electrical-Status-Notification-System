@@ -1,4 +1,4 @@
-# frontend/ — เว็บไซต์แสดงสถานะ
+# frontend/: เว็บไซต์แสดงสถานะ
 
 ดึงสถานะล่าสุดจาก `backend/` มาแสดงผลแบบเรียลไทม์ (poll ทุก 5 วินาที) แสดง `N/A` เมื่อ ESP32 หลุดการเชื่อมต่อเกิน 30 วินาที (ดูภาพรวมทั้งระบบที่ [README หลัก](../README.md))
 
@@ -20,7 +20,7 @@ frontend/
 - **ตั้งค่าผ่านหน้าเว็บ (Settings Modal)**: สามารถเปลี่ยน `API_URL` หรือ `Device ID` ผ่านปุ่มฟันเฟืองได้โดยตรงโดยไม่ต้องแก้โค้ด
 
 ## Setup
-1. สามารถแก้ไข `DEFAULT_CONFIG` ใน [script.js](file:///home/dentenplay5555/Desktop/Structure/frontend/script.js) ให้ตรงกับ Worker URL ของท่าน หรือตั้งค่าผ่านปุ่ม Settings ในหน้าเว็บได้ทันที:
+1. สามารถแก้ไข `DEFAULT_CONFIG` ใน [script.js](script.js) ให้ตรงกับ Worker URL ของท่าน หรือตั้งค่าผ่านปุ่ม Settings ในหน้าเว็บได้ทันที:
 ```js
 const DEFAULT_CONFIG = {
     apiUrl: "https://your-worker.workers.dev",

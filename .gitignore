@@ -50,3 +50,7 @@ Thumbs.db
 
 # LibreOffice temporary / lock files
 .~lock.*
+
+#otherr;
+frontend/.agents
+frontend/AGENTS.md

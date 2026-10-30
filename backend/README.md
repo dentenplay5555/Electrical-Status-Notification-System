@@ -6,7 +6,7 @@
 
 ```
 backend/
-├── wrangler.toml           # config หลัก: bind KV + D1, ตั้ง cron 09:10 เวลา UTC
+├── wrangler.toml           # config หลัก: bind D1, ตั้ง cron 09:10 เวลา UTC
 ├── schema.sql               # โครงตาราง D1 (SQL);
 ├── .dev.vars.example         # ชื่อตัวแปร secret (ไม่มีค่าจริง)
 └── src/
@@ -19,7 +19,7 @@ backend/
 ## ⚠️ ข้อควรระวังเฉพาะส่วนนี้
 
 - **ต้องตั้ง secret `DEVICE_TOKEN` เสมอ (อาจได้ Fail-Closed Auth)**: Endpoint `POST /update` ตรวจสอบ Bearer token ใน header `Authorization: Bearer <DEVICE_TOKEN>` หากลืมตั้งค่า secret บน Cloudflare Worker หรือค่าไม่ตรง Worker จะตอบ `401 Unauthorized` เสมอ เพื่อป้องกันไม่ให้ endpoint เปิดโล่งให้ใครเข้ามาก็ได้ (หากต้องการทดสอบ dev ในเครื่องโดยไม่ตรวจ token ให้ใส่ `ALLOW_NO_AUTH=true` ใน `.dev.vars` ของท่าน)
-- **LOA (LINE Official Account) มี Limit push/pull 300 ครั้ง/เดือน** (แผน Free) ระวังอย่าทดสอบส่งข้อความถี่เกินไปตอน dev เพราะโควตาจะหมดก่อนสิ้นเดือน แนะนำ `console.log` ดูผ่าน `wrangler tail` แทนการยิงข้อความจริงระหว่างเทส
+- **LOA (LINE Official Account) มีโควตาข้อความต่อเดือนตามแผนที่ใช้** (แผน Free จำกัดน้อย ตรวจตัวเลขปัจจุบันใน LINE OA Manager) ระวังอย่าทดสอบส่งข้อความถี่เกินไปตอน dev เพราะโควตาจะหมดก่อนสิ้นเดือน แนะนำ `console.log` ดูผ่าน `wrangler tail` แทนการยิงข้อความจริงระหว่างเทส
 - **`.dev.vars` ต้องอยู่โฟลเดอร์เดียวกับ `wrangler.toml` เท่านั้น** (คือ root ของ `backend/`) ย้ายไปที่อื่นจะหาไม่เจอ
 - `database_id` ใน `wrangler.toml` **ไม่ใช่ความลับ** commit ขึ้น GitHub ได้ปกติ โดยสิ่งที่ห้าม commit คือ `.dev.vars` (มี token จริง) เท่านั้น
 
@@ -31,7 +31,7 @@ npm install #ต้องมี node.js ครอบจักรวาล instal
 cp .dev.vars.example .dev.vars   # แล้วใส่ค่าจริงใน .dev.vars ของท่าน (linux ใช้ "cp" window ใช้ "copy")
 
 npx wrangler d1 create appliance-db     # สร้างฐานข้อมูล D1 ครั้งแรก
-npx wrangler d1 execute appliance-db --file=./schema.sql
+npx wrangler d1 execute appliance-db --remote --file=./schema.sql   # ต้องมี --remote ไม่งั้น /update จะตอบ 500 "no such table"
 npx wrangler secret put LINE_ACCESS_TOKEN
 npx wrangler secret put DEVICE_TOKEN    # สำคัญ: ต้องใส่ค่าเดียวกันกับใน firmware/main-src/config.h
 npx wrangler deploy
@@ -41,7 +41,7 @@ npx wrangler deploy
 
 | Method | Endpoint | คำอธิบาย |
 |---|---|---|
-| `POST` | `/update` | ESP32 ส่งค่าสถานะ/กระแส/กำลังไฟฟ้า (บันทึกลง KV และ D1 พร้อมกัน) |
+| `POST` | `/update` | ESP32 ส่งค่าสถานะ/กระแส/กำลังไฟฟ้า (บันทึกลง D1: `latest_status` และ `readings`) |
 | `GET` | `/status?device_id=ESP32-01` | เว็บไซต์ดึงสถานะล่าสุด (ตอบ `status: "N/A"` เมื่อขาดการติดต่อไปเกิน 30 วินาที) |
 | `GET` | `/health` | ตรวจสอบว่า Worker ทำงานปกติ |
 | `GET` | `/summary?device_id=ESP32-01` | ดึงสถิติรวมของวันนี้ (เวลาไทย) |
@@ -66,14 +66,14 @@ Cloudflare Cron จะใช้เวลา **UTC เท่านั้น** ไ
 crons = ["10 9 * * *"]  # 09:10 UTC = 16:10 น. เวลาไทย
 ```
 
-## 🔧 ปัญหาที่เคยเจอ — LINE webhook Verify แล้วขึ้น 404
+## 🔧 ปัญหาที่เคยเจอ — `no such table: latest_status` (Worker error 1101 / `/update` ตอบ 500)
 
-**สาเหตุที่พบบ่อยสุด**: โค้ดล่าสุดยังไม่ถูก deploy จริง หรือ URL ที่กรอกใน LINE Developers Console ไม่ตรง (ลืม `/webhook` ท้าย URL, มี `/` เกิน, หรือ deploy คนละ Worker ชื่อ)
+**สาเหตุ**: รัน `d1 execute` โดยไม่ใส่ `--remote` ตารางจึงถูกสร้างใน D1 ของเครื่องเท่านั้น ไม่ใช่บน Cloudflare
 
-**วิธีตรวจ**:
+**วิธีแก้**:
 ```bash
-npx wrangler deploy               # deploy ใหม่เอาให้ชัวร์
-curl -i -X POST https://your-worker.workers.dev/webhook \
-  -H "Content-Type: application/json" -d '{"events":[]}'
+npx wrangler d1 execute appliance-db --remote --file=./schema.sql
+npx wrangler tail    # ดู error จริงจาก Worker ระหว่างยิง request
 ```
-ถ้า curl ได้ 200 OK แต่ Verify ใน LINE Console ยัง fail แปลว่า URL ที่กรอกใน Console ผิด ไม่ใช่ปัญหาโค้ด
+
+> หมายเหตุ: ระบบนี้ไม่มี endpoint `/webhook` (ใช้ broadcast ส่งข้อความออกอย่างเดียว) ไม่ต้องตั้ง Webhook URL ใน LINE Developers Console

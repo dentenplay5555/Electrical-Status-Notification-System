@@ -1,5 +1,5 @@
 /**
- * Appliance Status Notifier — Frontend Client
+ * Appliance Status Notifier: Frontend Client
  * ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้าแบบเรียลไทม์
  */
 const DEFAULT_CONFIG = {
@@ -186,7 +186,7 @@ function render(result) {
         relativeTimeEl.textContent = "";
     }
 
-    const isOffline = result.status === "N/A" || !result.sensors || result.sensors.length === 0;
+    const isOffline = result.status === "N/A" || result.is_stale;
 
     if (isOffline) {
         setConnectionState("na", "ขาดการเชื่อมต่อ (N/A)");
@@ -198,8 +198,32 @@ function render(result) {
     setConnectionState("online", "ออนไลน์ (Online)");
     lastSuccessfulData = result;
 
+    if (!result.sensors || result.sensors.length === 0) {
+        renderEmptyState();
+        updateOverallMetrics([], false);
+        return;
+    }
+
     updateOverallMetrics(result.sensors, false);
     renderSensorCards(result.sensors);
+}
+
+function renderEmptyState() {
+    sensorsEl.innerHTML = `
+        <div class="sensor-card sensor-card--empty">
+            <div class="empty-notice__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h3 class="offline-notice__title">ยังไม่พบช่องเซนเซอร์</h3>
+            <p class="offline-notice__desc">
+                ESP32 เชื่อมต่อสำเร็จ แต่ยังไม่มีช่องวัดกระแส (INA219) รายงานค่าเข้ามา
+            </p>
+        </div>
+    `;
 }
 
 function updateOverallMetrics(sensors, isOffline) {
@@ -207,7 +231,7 @@ function updateOverallMetrics(sensors, isOffline) {
         metricTotalPowerEl.innerHTML = `0.0 <span class="unit">mW</span>`;
         metricTotalCurrentEl.innerHTML = `0.0 <span class="unit">mA</span>`;
         metricActiveChannelsEl.innerHTML = `0 <span class="unit">/ 0</span>`;
-        activeSensorCountEl.textContent = "0 ช่อง";
+        activeSensorCountEl.textContent = isOffline ? "ออฟไลน์" : "0 ช่อง";
         return;
     }
 
@@ -241,7 +265,7 @@ function renderOfflineNotice(lastSeen) {
 
     sensorsEl.innerHTML = `
         <div class="sensor-card sensor-card--offline-notice">
-            <div class="offline-notice__icon">
+            <div class="offline-notice__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="1" y1="1" x2="23" y2="23"></line>
                     <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
@@ -383,23 +407,33 @@ document.addEventListener("visibilitychange", () => {
    Settings Modal Interactions
    ========================================================================== */
 
-settingsBtnEl.addEventListener("click", () => {
+function openModal() {
     cfgApiUrlInput.value = config.apiUrl;
     cfgDeviceIdInput.value = config.deviceId;
     cfgPollIntervalInput.value = config.pollIntervalMs / 1000;
     settingsModalEl.classList.add("is-open");
     settingsModalEl.setAttribute("aria-hidden", "false");
-});
-
-modalCloseBtnEl.addEventListener("click", closeModal);
-settingsModalEl.addEventListener("click", (e) => {
-    if (e.target === settingsModalEl) closeModal();
-});
+    cfgApiUrlInput.focus();
+}
 
 function closeModal() {
     settingsModalEl.classList.remove("is-open");
     settingsModalEl.setAttribute("aria-hidden", "true");
+    settingsBtnEl.focus();
 }
+
+settingsBtnEl.addEventListener("click", openModal);
+modalCloseBtnEl.addEventListener("click", closeModal);
+
+settingsModalEl.addEventListener("click", (e) => {
+    if (e.target === settingsModalEl) closeModal();
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && settingsModalEl.classList.contains("is-open")) {
+        closeModal();
+    }
+});
 
 cfgSaveBtn.addEventListener("click", () => {
     const newUrl = cfgApiUrlInput.value.trim() || DEFAULT_CONFIG.apiUrl;
