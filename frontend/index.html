@@ -1,121 +1,273 @@
 <!DOCTYPE html>
 <html lang="th" data-theme="dark">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้า | โครงงาน IS โรงเรียนนครสวรรค์</title>
-<meta name="description" content="โครงงานการศึกษาค้นคว้าอิสระ (IS) ม.3 โรงเรียนนครสวรรค์: ระบบตรวจจับและแจ้งเตือนสถานะเปิด-ปิดอุปกรณ์ไฟฟ้า DC ด้วย ESP32 + INA219 ผ่าน Cloudflare Worker">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบแจ้งเตือนสถานะอุปกรณ์ไฟฟ้า | โครงงาน IS โรงเรียนนครสวรรค์</title>
+  <meta name="description"
+    content="โครงงานการศึกษาค้นคว้าอิสระ (IS) ม.3 โรงเรียนนครสวรรค์: ระบบตรวจจับและแจ้งเตือนสถานะเปิด-ปิดอุปกรณ์ไฟฟ้า DC ด้วย ESP32 + INA219 ผ่าน Cloudflare Worker">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
 </head>
+
 <body>
-<header class="nav"><div class="wrap">
-  <div class="brand">⚡ <span>Status</span> Notifier</div>
-  <nav aria-label="เมนูหลัก">
-    <a href="#about">โครงงาน</a><a href="#how">การทำงาน</a><a href="#hardware">ฮาร์ดแวร์</a>
-    <a href="#results">ผลการทดลอง</a><a href="#docs">เอกสาร</a><a href="#team">ผู้จัดทำ</a>
-    <a class="cta" href="dashboard.html">ดู Live Dashboard</a>
-  </nav>
-</div></header>
+  <header class="nav">
+    <div class="wrap">
+      <div class="brand">⚡ <span>Status</span> Notifier</div>
+      <nav aria-label="เมนูหลัก">
+        <a href="#about">โครงงาน</a><a href="#how">การทำงาน</a><a href="#hardware">ฮาร์ดแวร์</a>
+        <a href="#results">ผลการทดลอง</a><a href="#docs">เอกสาร</a><a href="#team">ผู้จัดทำ</a>
+        <a class="cta" href="dashboard.html">ดู Live Dashboard</a>
+      </nav>
+    </div>
+  </header>
 
-<main>
-<section class="hero"><div class="wrap">
-  <div class="eyebrow">โครงงานการศึกษาค้นคว้าอิสระ (IS) · ม.3 · ปีการศึกษา 2569</div>
-  <h1>ระบบแจ้งเตือนสถานะ<br>อุปกรณ์ไฟฟ้า</h1>
-  <p class="lead">ตรวจว่าอุปกรณ์ไฟฟ้ากระแสตรงกำลัง<strong>เปิดหรือปิด</strong>อยู่ โดยวัดกระแสด้วยเซนเซอร์ INA219 ส่งผ่าน ESP32 ไปยัง Cloudflare แสดงสถานะบนเว็บ และสรุปการใช้งานประจำวันเข้า LINE เวลา 16:10 น.</p>
-  <div class="btns">
-    <a class="btn primary" href="dashboard.html">เปิด Live Dashboard</a>
-    <a class="btn" href="#docs">ดาวน์โหลดรายงาน</a>
-    <a class="btn" href="https://github.com/dentenplay5555/electrical-status-notification-system">GitHub</a>
-  </div>
-  <div class="chips"><span class="chip">ESP32</span><span class="chip">INA219 ×2 (I2C)</span><span class="chip">Cloudflare Workers + D1</span><span class="chip">LINE Messaging API</span><span class="chip">GitHub Pages</span></div>
-</div></section>
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="eyebrow">โครงงานการศึกษาค้นคว้าอิสระ (IS) · ม.3 · ปีการศึกษา 2569</div>
+        <h1>ระบบแจ้งเตือนสถานะ<br>อุปกรณ์ไฟฟ้า</h1>
+        <p class="lead">ตรวจว่าอุปกรณ์ไฟฟ้ากระแสตรงกำลัง<strong>เปิดหรือปิด</strong>อยู่ โดยวัดกระแสด้วยเซนเซอร์ INA219
+          ส่งผ่าน ESP32 ไปยัง Cloudflare แสดงสถานะบนเว็บ และสรุปการใช้งานประจำวันเข้า LINE เวลา 16:10 น.</p>
+        <div class="btns">
+          <a class="btn primary" href="dashboard.html">เปิด Live Dashboard</a>
+          <a class="btn" href="#docs">ดาวน์โหลดรายงาน</a>
+          <a class="btn" href="https://github.com/dentenplay5555/electrical-status-notification-system">GitHub</a>
+        </div>
+        <div class="chips"><span class="chip">ESP32</span><span class="chip">INA219 ×2 (I2C)</span><span
+            class="chip">Cloudflare Workers + D1</span><span class="chip">LINE Messaging API</span><span
+            class="chip">GitHub Pages</span></div>
+      </div>
+    </section>
 
-<section id="about"><div class="wrap">
-  <div class="eyebrow">โครงงาน</div><h2>ทำไมต้องมีระบบนี้</h2>
-  <p>การลืมปิดอุปกรณ์ไฟฟ้าทำให้สิ้นเปลืองพลังงานและอาจเสี่ยงต่อความปลอดภัย ผู้จัดทำจึงสร้างระบบที่ตรวจสถานะอุปกรณ์จากกระแสไฟฟ้าจริง แล้วแจ้งให้ผู้ใช้ทราบจากที่ไหนก็ได้</p>
-  <div class="grid" style="margin-top:20px">
-    <div class="card"><span class="num">1</span><h3>ออกแบบและพัฒนาระบบ</h3><p>ใช้ ESP32 ร่วมกับ INA219 เพื่อตรวจจับสถานะเปิด-ปิดของอุปกรณ์</p></div>
-    <div class="card"><span class="num">2</span><h3>แจ้งสถานะ</h3><p>แสดงสถานะบนเว็บไซต์แบบเกือบเรียลไทม์ และสรุปรายวันผ่าน LINE</p></div>
-    <div class="card"><span class="num">3</span><h3>ทดสอบความแม่นยำ</h3><p>เทียบผลที่ระบบตรวจจับได้กับสถานะจริงและค่าจากมัลติมิเตอร์</p></div>
-  </div>
-  <div class="note warn"><strong>ขอบเขต:</strong> รองรับเฉพาะโหลดไฟฟ้ากระแสตรง (DC) แรงดัน 3–9 V กระแสไม่เกินช่วงของ INA219 <strong>ห้ามใช้กับไฟบ้าน AC 220 V</strong></div>
-</div></section>
+    <section id="about">
+      <div class="wrap">
+        <div class="eyebrow">โครงงาน</div>
+        <h2>ทำไมต้องมีระบบนี้</h2>
+        <p>การลืมปิดอุปกรณ์ไฟฟ้าทำให้สิ้นเปลืองพลังงานและอาจเสี่ยงต่อความปลอดภัย
+          ผู้จัดทำจึงสร้างระบบที่ตรวจสถานะอุปกรณ์จากกระแสไฟฟ้าจริง แล้วแจ้งให้ผู้ใช้ทราบจากที่ไหนก็ได้</p>
+        <div class="grid" style="margin-top:20px">
+          <div class="card"><span class="num">1</span>
+            <h3>ออกแบบและพัฒนาระบบ</h3>
+            <p>ใช้ ESP32 ร่วมกับ INA219 เพื่อตรวจจับสถานะเปิด-ปิดของอุปกรณ์</p>
+          </div>
+          <div class="card"><span class="num">2</span>
+            <h3>แจ้งสถานะ</h3>
+            <p>แสดงสถานะบนเว็บไซต์แบบเกือบเรียลไทม์ และสรุปรายวันผ่าน LINE</p>
+          </div>
+          <div class="card"><span class="num">3</span>
+            <h3>ทดสอบความแม่นยำ</h3>
+            <p>เทียบผลที่ระบบตรวจจับได้กับสถานะจริงและค่าจากมัลติมิเตอร์</p>
+          </div>
+        </div>
+        <div class="note warn"><strong>ขอบเขต:</strong> รองรับเฉพาะโหลดไฟฟ้ากระแสตรง (DC) แรงดัน 3–9 V
+          กระแสไม่เกินช่วงของ INA219 <strong>ห้ามใช้กับไฟบ้าน AC 220 V</strong></div>
+      </div>
+    </section>
 
-<section id="how" style="background:var(--bg2)"><div class="wrap">
-  <div class="eyebrow">การทำงาน</div><h2>ข้อมูลไหลอย่างไร</h2>
-  <div class="flow" role="img" aria-label="แผนภาพ: INA219 ถึง ESP32 ถึง Cloudflare Worker ถึง D1 แล้วไปเว็บไซต์และ LINE">
-    <div class="node"><b>INA219 ×2</b><small>วัดกระแส/แรงดัน</small></div><div class="arrow">→</div>
-    <div class="node"><b>ESP32</b><small>กรอง ON/OFF · ส่งทุก 10 วิ</small></div><div class="arrow">→</div>
-    <div class="node"><b>Cloudflare Worker</b><small>ตรวจ token · บันทึก</small></div><div class="arrow">→</div>
-    <div class="node"><b>D1 Database</b><small>สถานะล่าสุด + ประวัติ</small></div><div class="arrow">→</div>
-    <div class="node"><b>เว็บ + LINE</b><small>poll 5 วิ · สรุป 16:10</small></div>
-  </div>
-  <div class="grid">
-    <div class="card"><h3>ตัดสิน ON/OFF จากกระแส</h3><p>ใช้เกณฑ์สองขอบ (Hysteresis) กันสถานะกระพริบ ค่าเริ่มต้น: เปิดเมื่อ &gt; 25 mA, ปิดเมื่อ &lt; 15 mA และปรับตามโหลดที่วัดจริง</p></div>
-    <div class="card"><h3>N/A ไม่ใช่ OFF</h3><p>ถ้าไม่ได้รับข้อมูลเกิน 30 วินาที เว็บจะแสดง “N/A” (ไม่ทราบสถานะ) เพราะอุปกรณ์อาจหลุดการเชื่อมต่อ ไม่ได้แปลว่าปิด</p></div>
-    <div class="card"><h3>ปลอดภัยขึ้น</h3><p>ESP32 ส่งข้อมูลด้วย Bearer token และเซนเซอร์ที่อ่านไม่ได้จะถูกรายงานเป็น FAULT</p></div>
-  </div>
-</div></section>
+    <section id="how" style="background:var(--bg2)">
+      <div class="wrap">
+        <div class="eyebrow">การทำงาน</div>
+        <h2>ข้อมูลไหลอย่างไร</h2>
+        <div class="flow" role="img"
+          aria-label="แผนภาพ: INA219 ถึง ESP32 ถึง Cloudflare Worker ถึง D1 แล้วไปเว็บไซต์และ LINE">
+          <div class="node"><b>INA219 ×2</b><small>วัดกระแส/แรงดัน</small></div>
+          <div class="arrow">→</div>
+          <div class="node"><b>ESP32</b><small>กรอง ON/OFF · ส่งทุก 10 วิ</small></div>
+          <div class="arrow">→</div>
+          <div class="node"><b>Cloudflare Worker</b><small>ตรวจ token · บันทึก</small></div>
+          <div class="arrow">→</div>
+          <div class="node"><b>D1 Database</b><small>สถานะล่าสุด + ประวัติ</small></div>
+          <div class="arrow">→</div>
+          <div class="node"><b>เว็บ + LINE</b><small>poll 5 วิ · สรุป 16:10</small></div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3>ตัดสิน ON/OFF จากกระแส</h3>
+            <p>ใช้เกณฑ์สองขอบ (Hysteresis) กันสถานะกระพริบ ค่าเริ่มต้น: เปิดเมื่อ &gt; 25 mA, ปิดเมื่อ &lt; 15 mA
+              และปรับตามโหลดที่วัดจริง</p>
+          </div>
+          <div class="card">
+            <h3>N/A ไม่ใช่ OFF</h3>
+            <p>ถ้าไม่ได้รับข้อมูลเกิน 30 วินาที เว็บจะแสดง “N/A” (ไม่ทราบสถานะ) เพราะอุปกรณ์อาจหลุดการเชื่อมต่อ
+              ไม่ได้แปลว่าปิด</p>
+          </div>
+          <div class="card">
+            <h3>ปลอดภัยขึ้น</h3>
+            <p>ESP32 ส่งข้อมูลด้วย Bearer token และเซนเซอร์ที่อ่านไม่ได้จะถูกรายงานเป็น FAULT</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-<section id="hardware"><div class="wrap">
-  <div class="eyebrow">ฮาร์ดแวร์</div><h2>อุปกรณ์ที่ใช้</h2>
-  <div class="grid">
-    <div class="card"><h3>ESP32 DevKit</h3><p>ไมโครคอนโทรลเลอร์หลัก มี Wi-Fi ในตัว</p></div>
-    <div class="card"><h3>INA219 ×2</h3><p>วัดแรงดัน กระแส กำลัง ผ่าน I2C ที่อยู่ 0x40 และ 0x41</p></div>
-    <div class="card"><h3>Expansion Board</h3><p>บอร์ดที่ออกแบบเอง (KiCad) รองรับไฟเข้า DC Jack / USB Micro-B / USB-C ผ่านไดโอดกันไฟย้อน</p></div>
-  </div>
-  <figure><img src="assets/circuit.jpg" alt="ผังวงจรการต่อ ESP32, INA219 และโหลด DC" loading="lazy"><figcaption>ผังวงจรการเชื่อมต่ออุปกรณ์</figcaption></figure>
-</div></section>
+    <section id="hardware">
+      <div class="wrap">
+        <div class="eyebrow">ฮาร์ดแวร์</div>
+        <h2>อุปกรณ์ที่ใช้</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>ESP32 DevKit</h3>
+            <p>ไมโครคอนโทรลเลอร์หลัก มี Wi-Fi ในตัว</p>
+          </div>
+          <div class="card">
+            <h3>INA219 ×2</h3>
+            <p>วัดแรงดัน กระแส กำลัง ผ่าน I2C ที่อยู่ 0x40 และ 0x41</p>
+          </div>
+          <div class="card">
+            <h3>Expansion Board</h3>
+            <p>บอร์ดที่ออกแบบเอง (KiCad) รองรับไฟเข้า DC Jack / USB Micro-B / USB-C ผ่านไดโอดกันไฟย้อน</p>
+          </div>
+        </div>
+        <figure><img src="assets/circuit.jpg" alt="ผังวงจรการต่อ ESP32, INA219 และโหลด DC" loading="lazy">
+          <figcaption>ผังวงจรการเชื่อมต่ออุปกรณ์</figcaption>
+        </figure>
+      </div>
+    </section>
 
-<section id="results" style="background:var(--bg2)"><div class="wrap">
-  <div class="eyebrow">ผลการทดลอง</div><h2>ผลการวัดและทดสอบ</h2>
-  <div class="note warn">อยู่ระหว่างการวัดผลจริง จะแสดงเฉพาะตัวเลขที่วัดได้ (เกณฑ์ ON/OFF, ความแม่นยำของ INA219, ความหน่วง, ความเสถียร)</div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>หัวข้อ</th><th>วิธีวัด</th><th>ผล</th></tr></thead>
-      <tbody>
-        <tr><td>เกณฑ์ ON/OFF</td><td>วัดกระแสโหลดจริงช่วงเปิด/ปิด</td><td>รอผล</td></tr>
-        <tr><td>ความแม่นยำของ INA219</td><td>เทียบกับมัลติมิเตอร์</td><td>รอผล</td></tr>
-        <tr><td>ความหน่วงจนหน้าเว็บเปลี่ยน</td><td>จับเวลาจากวิดีโอ</td><td>รอผล</td></tr>
-        <tr><td>เวลาเปลี่ยนเป็น N/A</td><td>ถอดไฟ ESP32 แล้วจับเวลา</td><td>รอผล</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div></section>
+    <section id="results" style="background:var(--bg2)">
+      <div class="wrap">
+        <div class="eyebrow">ผลการทดลอง</div>
+        <h2>ผลการวัดและทดสอบ</h2>
+        <div class="note warn">อยู่ระหว่างการวัดผลจริง จะแสดงเฉพาะตัวเลขที่วัดได้ (เกณฑ์ ON/OFF, ความแม่นยำของ INA219,
+          ความหน่วง, ความเสถียร)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>หัวข้อ</th>
+                <th>วิธีวัด</th>
+                <th>ผล</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>เกณฑ์ ON/OFF</td>
+                <td>วัดกระแสโหลดจริงช่วงเปิด/ปิด</td>
+                <td>รอผล</td>
+              </tr>
+              <tr>
+                <td>ความแม่นยำของ INA219</td>
+                <td>เทียบกับมัลติมิเตอร์</td>
+                <td>รอผล</td>
+              </tr>
+              <tr>
+                <td>ความหน่วงจนหน้าเว็บเปลี่ยน</td>
+                <td>จับเวลาจากวิดีโอ</td>
+                <td>รอผล</td>
+              </tr>
+              <tr>
+                <td>เวลาเปลี่ยนเป็น N/A</td>
+                <td>ถอดไฟ ESP32 แล้วจับเวลา</td>
+                <td>รอผล</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-<section id="docs"><div class="wrap">
-  <div class="eyebrow">เอกสาร</div><h2>รายงานและซอร์สโค้ด</h2>
-  <div class="grid">
-    <div class="card"><h3>📄 เล่มรายงาน IS</h3><p><a href="https://github.com/dentenplay5555/electrical-status-notification-system/blob/master/docs/Report/report.pdf">report.pdf</a></p></div>
-    <div class="card"><h3>📘 คู่มือและเอกสารเทคนิค</h3><p><a href="https://github.com/dentenplay5555/electrical-status-notification-system/tree/master/docs/unofficial-documents">docs/unofficial-documents</a></p></div>
-    <div class="card"><h3>💻 ซอร์สโค้ดทั้งหมด</h3><p><a href="https://github.com/dentenplay5555/electrical-status-notification-system">GitHub repository</a> (firmware, backend, frontend, hardware)</p></div>
-  </div>
-  <div class="qr" style="margin-top:28px">
-    <img src="assets/qr.svg" alt="QR code ไปยังเว็บไซต์โครงงานนี้">
-    <div><h3>สแกนเพื่อเปิดเว็บไซต์</h3><p>ใช้ตอนนำเสนอ หรือใส่ในรายงาน</p></div>
-  </div>
-</div></section>
+    <section id="docs">
+      <div class="wrap">
+        <div class="eyebrow">เอกสาร</div>
+        <h2>รายงานและซอร์สโค้ด</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>📄 เล่มรายงาน IS</h3>
+            <p>รายงานฉบับสมบูรณ์ (PDF) สามารถเปิดดูได้โดยตรงจากกรอบแสดงผลด้านล่าง หรือดาวน์โหลดเก็บไว้</p>
+            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <a class="btn primary" href="assets/report.pdf" target="_blank" rel="noopener">เปิดเต็มจอ ↗</a>
+              <a class="btn" href="assets/report.pdf" download="report-is-nakhonsawan.pdf">ดาวน์โหลด PDF</a>
+            </div>
+          </div>
+          <div class="card">
+            <h3>📘 คู่มือและเอกสารเทคนิค</h3>
+            <p><a
+                href="https://github.com/dentenplay5555/electrical-status-notification-system/tree/master/docs/unofficial-documents"
+                target="_blank" rel="noopener">docs/unofficial-documents</a>
+            </p>
+            <p style="font-size: 0.88rem; color: var(--muted); margin-top: 8px;">บันทึกการประชุม, การทดลองเบื้องต้น,
+              และเอกสารอ้างอิง</p>
+          </div>
+          <div class="card">
+            <h3>💻 ซอร์สโค้ดทั้งหมด</h3>
+            <p><a href="https://github.com/dentenplay5555/electrical-status-notification-system" target="_blank"
+                rel="noopener">GitHub repository</a></p>
+            <p style="font-size: 0.88rem; color: var(--muted); margin-top: 8px;">ซอร์สโค้ด Firmware ESP32, Backend
+              Workers, Frontend, และผังวงจร KiCad</p>
+          </div>
+        </div>
 
-<section id="team" style="background:var(--bg2)"><div class="wrap">
-  <div class="eyebrow">ผู้จัดทำ</div><h2>คณะผู้จัดทำและครูที่ปรึกษา</h2>
-  <ul class="team">
-    <li>ด.ช.กฤตภาส ใจใหญ่ · เลขที่ 1 ม.3/1</li>
-    <li>ด.ช.กิตติศักดิ์ วงษา · เลขที่ 4 ม.3/1</li>
-    <li>ด.ช.ปกรณ์เกียรติ แหวนแก้ว · เลขที่ 15 ม.3/1</li>
-    <li>ด.ช.วรัญชัย พุทธวงค์ · เลขที่ 19 ม.3/1</li>
-    <li>ด.ช.วิชญะ เสาไธสง · เลขที่ 20 ม.3/1</li>
-    <li>ด.ช.อชิระ ลิ้มสุวรรณ · เลขที่ 21 ม.3/1</li>
-  </ul>
-  <h3 style="margin-top:24px">ครูที่ปรึกษา</h3>
-  <ul class="team">
-    <li>ครูศิรประภา ปิ่นเทศ</li><li>ครูสุพรรณี อภิชัยเอนก</li><li>ครูธันยาณัฐ รังสิยานนท์</li>
-  </ul>
-</div></section>
-</main>
+        <div class="pdf-viewer-card" style="margin-top:28px">
+          <div class="pdf-viewer-header">
+            <div class="pdf-viewer-title">
+              <span class="pdf-tag">PDF Preview</span>
+              <strong>เล่มรายงานการศึกษาค้นคว้าอิสระ (IS) ฉบับสมบูรณ์</strong>
+            </div>
+            <div class="pdf-viewer-actions">
+              <a href="assets/report.pdf" target="_blank" rel="noopener" class="btn"
+                title="เปิดไฟล์ PDF ในแท็บใหม่">เปิดในแท็บใหม่ ↗</a>
+              <a href="assets/report.pdf" download="report-is-nakhonsawan.pdf" class="btn primary"
+                title="ดาวน์โหลดไฟล์ PDF ลงเครื่อง">ดาวน์โหลด PDF</a>
+            </div>
+          </div>
+          <div class="pdf-embed-container">
+            <object data="assets/report.pdf#toolbar=1&navpanes=0&view=FitH" type="application/pdf" width="100%"
+              height="100%" aria-label="ตัวอย่างเล่มรายงานการศึกษาค้นคว้าอิสระ (IS)">
+              <div class="pdf-fallback-box">
+                <div class="pdf-fallback-icon">📄</div>
+                <h3>เล่มรายงานโครงงาน IS (PDF)</h3>
+                <p>เบราว์เซอร์หรืออุปกรณ์ของคุณไม่รองรับการเปิดอ่านเอกสาร PDF ภายในหน้าเว็บโดยตรง
+                  สามารถกดเปิดอ่านแยกหรือดาวน์โหลดไฟล์ได้จากปุ่มด้านล่าง</p>
+                <div class="btns" style="justify-content: center; margin-top: 16px;">
+                  <a href="assets/report.pdf" target="_blank" rel="noopener"
+                    class="btn primary">เปิดเอกสารในแท็บใหม่</a>
+                  <a href="assets/report.pdf" download="report-is-nakhonsawan.pdf" class="btn">ดาวน์โหลดไฟล์ PDF (670
+                    KB)</a>
+                </div>
+              </div>
+            </object>
+          </div>
+        </div>
 
-<footer><div class="wrap">โครงงานการศึกษาค้นคว้าอิสระ (IS) ภาคเรียนที่ 1 ปีการศึกษา 2569 · โรงเรียนนครสวรรค์ อำเภอเมืองนครสวรรค์ จังหวัดนครสวรรค์ · เผยแพร่ภายใต้ MIT License</div></footer>
+        <div class="qr" style="margin-top:28px">
+          <img src="assets/qr.svg" alt="QR code ไปยังเว็บไซต์โครงงานนี้">
+          <div>
+            <h3>สแกนเพื่อเปิดเว็บไซต์</h3>
+            <p>เพื่อความสะดวกสบายในการเข้าถึง</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="team" style="background:var(--bg2)">
+      <div class="wrap">
+        <div class="eyebrow">ผู้จัดทำ</div>
+        <h2>คณะผู้จัดทำและครูที่ปรึกษา</h2>
+        <ul class="team">
+          <li>นายกฤตภาส ใจใหญ่ · เลขที่ 1 ม.3/1</li>
+          <li>ด.ช.กิตติศักดิ์ วงษา · เลขที่ 4 ม.3/1</li>
+          <li>ด.ช.ปกรณ์เกียรติ แหวนแก้ว · เลขที่ 15 ม.3/1</li>
+          <li>ด.ช.วรัญชัย พุทธวงค์ · เลขที่ 19 ม.3/1</li>
+          <li>ด.ช.วิชญะ เสาไธสง · เลขที่ 20 ม.3/1</li>
+          <li>ด.ช.อชิระ ลิ้มสุวรรณ · เลขที่ 21 ม.3/1</li>
+        </ul>
+        <h3 style="margin-top:24px">ครูที่ปรึกษา</h3>
+        <ul class="team">
+          <li>ครูศิรประภา ปิ่นเทศ</li>
+          <li>ครูสุพรรณี อภิชัยเอนก</li>
+          <li>ครูธันยาณัฐ รังสิยานนท์</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">โครงงานการศึกษาค้นคว้าอิสระ (IS) ภาคเรียนที่ 1 ปีการศึกษา 2569 · โรงเรียนนครสวรรค์
+      อำเภอเมืองนครสวรรค์ จังหวัดนครสวรรค์ · เผยแพร่ภายใต้ MIT License</div>
+  </footer>
 </body>
+
 </html>
