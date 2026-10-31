@@ -3,6 +3,7 @@ import { handleUpdate } from "./routes/update";
 import { handleStatus } from "./routes/status";
 import { handleHealth } from "./routes/health";
 import { handleSummary, handleHistory } from "./routes/metrics";
+import { handleAdmin } from "./routes/admin";
 import { handleOptions, jsonResponse } from "./lib/cors";
 import { getTodaySummary, deleteOldReadings } from "./lib/db";
 import { sendLineMessage } from "./lib/line";
@@ -30,6 +31,9 @@ export default {
         }
         if (url.pathname === "/history" && request.method === "GET") {
             return handleHistory(request, env);
+        }
+        if (url.pathname === "/admin") {
+            return handleAdmin(request, env);
         }
 
         return jsonResponse({ error: "not found", path: url.pathname }, { status: 404 });

@@ -3,3 +3,8 @@ LINE_ACCESS_TOKEN=your_line_token_here
 DEVICE_TOKEN=your_secret_device_token_here
 # ตัวเลือกเสริม: ใส่ ALLOW_NO_AUTH=true หากต้องการทดสอบ dev ในเครื่องโดยไม่ต้องส่ง Authorization Bearer token
 # ALLOW_NO_AUTH=true
+
+# สำหรับ Protected Admin Endpoint (/admin)
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change_this_to_your_secure_admin_password
+

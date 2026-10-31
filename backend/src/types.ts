@@ -7,6 +7,8 @@ export interface Env {
     LINE_USER_ID?: string;
     DEVICE_TOKEN?: string;          // Bearer token สำหรับ POST /update (wrangler secret put DEVICE_TOKEN)
     ALLOW_NO_AUTH?: string;         // ตั้งเป็น "true" เฉพาะใน .dev.vars ตอนพัฒนาเพื่อข้ามการตรวจ token
+    ADMIN_USERNAME?: string;        // ชื่อผู้ใช้สำหรับ /admin (default: admin)
+    ADMIN_PASSWORD?: string;        // รหัสผ่านสำหรับ /admin (wrangler secret put ADMIN_PASSWORD)
 }
 
 export interface SensorReading {

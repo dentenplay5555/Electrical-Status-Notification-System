@@ -46,6 +46,9 @@ const cfgResetBtn = document.getElementById("cfg-reset-btn");
 // State
 let lastSuccessfulData = null;
 let lastSeenDate = null;
+let lastSeenStr = null;
+let dataJustUpdatedUntil = 0;
+let currentConnectionState = "";
 let pollTimerId = null;
 let pollCountdown = config.pollIntervalMs / 1000;
 let isFetching = false;
@@ -73,6 +76,8 @@ themeBtnEl.addEventListener("click", toggleTheme);
    ========================================================================== */
 
 function setConnectionState(state, text) {
+    if (currentConnectionState === state && connectionTextEl.textContent === text) return;
+    currentConnectionState = state;
     connectionPillEl.className = "connection-pill";
     if (state === "online") {
         connectionPillEl.classList.add("connection-pill--online");
@@ -148,8 +153,26 @@ function updateProgressBar(pct) {
 }
 
 /* ==========================================================================
-   Relative Time Updates
+   Relative Time Updates & Formatting
    ========================================================================== */
+
+function formatElapsedTime(totalSeconds) {
+    if (totalSeconds <= 0) return "0 sec ago";
+
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days} day${days > 1 ? "s" : ""}`);
+    if (hours > 0) parts.push(`${hours} hr${hours > 1 ? "s" : ""}`);
+    if (minutes > 0) parts.push(`${minutes} min${minutes > 1 ? "s" : ""}`);
+    if (seconds > 0) parts.push(`${seconds} sec`);
+
+    if (parts.length === 0) return "0 sec ago";
+    return parts.join(" ") + " ago";
+}
 
 function updateRelativeTime() {
     if (!lastSeenDate) {
@@ -157,15 +180,28 @@ function updateRelativeTime() {
         return;
     }
 
-    const secondsAgo = Math.max(0, Math.floor((Date.now() - lastSeenDate.getTime()) / 1000));
-    if (secondsAgo < 5) {
-        relativeTimeEl.textContent = "(เมื่อสักครู่)";
-    } else if (secondsAgo < 60) {
-        relativeTimeEl.textContent = `(${secondsAgo} วินาทีที่แล้ว)`;
-    } else {
-        const mins = Math.floor(secondsAgo / 60);
-        relativeTimeEl.textContent = `(${mins} นาทีที่แล้ว)`;
+    const now = Date.now();
+    const secondsAgo = Math.max(0, Math.floor((now - lastSeenDate.getTime()) / 1000));
+
+    // หากสัญญาณขาดหายไปเกิน 30 วินาที ให้ตัดเข้าสู่สถานะ N/A อัตโนมัติทันที
+    if (secondsAgo >= 30) {
+        if (currentConnectionState !== "na") {
+            setConnectionState("na", "ขาดการเชื่อมต่อ (N/A)");
+            renderOfflineNotice(lastSeenDate ? lastSeenDate.toISOString() : null);
+            updateOverallMetrics([], true);
+        }
+        relativeTimeEl.textContent = `(${formatElapsedTime(secondsAgo)})`;
+        return;
     }
+
+    // เมื่อข้อมูลเพิ่งอัปเดตใหม่ ให้แสดง (Data updated) ค้างไว้ประมาณ 2-3 วินาที
+    if (now < dataJustUpdatedUntil) {
+        relativeTimeEl.textContent = "(Data updated)";
+        return;
+    }
+
+    // เวลาจริงแบบนับขึ้น: day hr min sec (เฉพาะหน่วยที่ไม่ใช่ 0 เท่านั้น นอกนั้นไม่แสดง)
+    relativeTimeEl.textContent = `(${formatElapsedTime(secondsAgo)})`;
 }
 
 setInterval(updateRelativeTime, 1000);
@@ -177,25 +213,48 @@ setInterval(updateRelativeTime, 1000);
 function render(result) {
     deviceIdLabelEl.textContent = result.device_id || config.deviceId;
 
+    const now = Date.now();
+    let secondsAgo = 0;
+
     if (result.last_seen) {
         lastSeenDate = new Date(result.last_seen);
+        secondsAgo = Math.max(0, Math.floor((now - lastSeenDate.getTime()) / 1000));
         lastUpdatedEl.textContent = lastSeenDate.toLocaleTimeString("th-TH");
-        updateRelativeTime();
     } else {
         lastUpdatedEl.textContent = "-";
         relativeTimeEl.textContent = "";
     }
 
-    const isOffline = result.status === "N/A" || result.is_stale;
+    const isOffline = result.status === "N/A" || result.is_stale || secondsAgo >= 30;
 
     if (isOffline) {
+        dataJustUpdatedUntil = 0;
         setConnectionState("na", "ขาดการเชื่อมต่อ (N/A)");
         renderOfflineNotice(result.last_seen);
         updateOverallMetrics([], true);
+        if (lastSeenDate) {
+            relativeTimeEl.textContent = `(${formatElapsedTime(secondsAgo)})`;
+        }
         return;
     }
 
+    // ตรวจสอบว่ามีข้อมูลอัปเดตใหม่จริงหรือไม่ (ตรวจจาก last_seen)
+    const isNewData = result.last_seen && result.last_seen !== lastSeenStr;
+    if (isNewData) {
+        lastSeenStr = result.last_seen;
+        dataJustUpdatedUntil = now + 3000; // ค้างสถานะ "Data updated" ไว้ 3 วินาที
+    }
+
+    const wasOffline = currentConnectionState === "na";
     setConnectionState("online", "ออนไลน์ (Online)");
+    updateRelativeTime();
+
+    // หากข้อมูลเซนเซอร์ชุดเดิมและไม่ใช่ข้อมูลใหม่ ไม่จำเป็นต้อง render DOM ซ้ำ
+    const isSameSensors = !wasOffline &&
+        lastSuccessfulData &&
+        !isNewData &&
+        JSON.stringify(lastSuccessfulData.sensors) === JSON.stringify(result.sensors);
+
     lastSuccessfulData = result;
 
     if (!result.sensors || result.sensors.length === 0) {
@@ -204,8 +263,10 @@ function render(result) {
         return;
     }
 
-    updateOverallMetrics(result.sensors, false);
-    renderSensorCards(result.sensors);
+    if (!isSameSensors) {
+        updateOverallMetrics(result.sensors, false);
+        renderSensorCards(result.sensors);
+    }
 }
 
 function renderEmptyState() {
@@ -259,6 +320,10 @@ function updateOverallMetrics(sensors, isOffline) {
 }
 
 function renderOfflineNotice(lastSeen) {
+    if (sensorsEl.querySelector(".sensor-card--offline-notice")) {
+        return;
+    }
+
     const timeNotice = lastSeen
         ? `สัญญาณขาดหายไปเกิน 30 วินาที (ล่าสุดเมื่อ ${new Date(lastSeen).toLocaleTimeString("th-TH")})`
         : "ยังไม่เคยได้รับสัญญาณจากอุปกรณ์ ESP32";
