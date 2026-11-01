@@ -22,7 +22,9 @@ export interface SensorReading {
 
 export interface DeviceUpdate {
     device_id: string;
+    boot_id?: string;          // Session identifier generated on device startup (prevents 409 after reboot)
     sensors: SensorReading[];
+    sequence_number?: number;  // replay protection: ถ้าส่งมา ต้อง > ค่าล่าสุดที่ server เก็บไว้ใน boot session นั้น
 }
 
 export interface StoredStatus extends DeviceUpdate {
@@ -36,4 +38,17 @@ export interface SensorSummaryRow {
     peak_power_mw: number;
     avg_voltage_v?: number;
     avg_current_ma?: number;
+}
+
+// ----- Database Quota Info -----
+export interface DbQuotaInfo {
+    readings_count: number;
+    devices_count: number;
+    sensors_count: number;
+    latest_status_count: number;
+    estimated_size_mb: number;       // ประมาณจากจำนวน rows
+    oldest_reading?: string;         // ISO timestamp
+    newest_reading?: string;         // ISO timestamp
+    d1_free_tier_limit_mb: number;   // 5GB
+    usage_percent: number;
 }

@@ -4,14 +4,16 @@
  */
 const DEFAULT_CONFIG = {
     apiUrl: "https://appliance-notifier-backend.benten012555.workers.dev",
-    deviceId: "TM-Opera-O",
+    deviceId: "ESP32-01",
     pollIntervalMs: 5000,
 };
-// อ่านค่า config จาก localStorage หรือไม่ก็ใช้ค่าเริ่มต้น
+// อ่านค่า config จาก localStorage หรือใช้ค่าเริ่มต้น (พร้อม migrate ค่าเก่า TM-Opera-O)
 function loadConfig() {
+    const savedDevice = localStorage.getItem("asn_device_id");
+    const deviceId = (savedDevice && savedDevice !== "TM-Opera-O") ? savedDevice : DEFAULT_CONFIG.deviceId;
     return {
         apiUrl: localStorage.getItem("asn_api_url") || DEFAULT_CONFIG.apiUrl,
-        deviceId: localStorage.getItem("asn_device_id") || DEFAULT_CONFIG.deviceId,
+        deviceId,
         pollIntervalMs: parseInt(localStorage.getItem("asn_poll_interval"), 10) || DEFAULT_CONFIG.pollIntervalMs,
     };
 }
@@ -341,7 +343,10 @@ function renderOfflineNotice(lastSeen) {
                     <line x1="12" y1="20" x2="12.01" y2="20"></line>
                 </svg>
             </div>
-            <div class="badge badge--na" style="margin-bottom: 12px;">สถานะ: N/A (ไม่ทราบสถานะ)</div>
+            <div class="badge badge--na" style="margin-bottom: 12px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path></svg>
+                สถานะ: N/A (ไม่ทราบสถานะ)
+            </div>
             <h3 class="offline-notice__title">ESP32 ขาดการเชื่อมต่อ</h3>
             <p class="offline-notice__desc">
                 ${timeNotice}<br />
@@ -395,15 +400,18 @@ function createSensorCard(sensor) {
 function updateSensorCard(card, sensor) {
     let badgeClass = "badge--off";
     let badgeText = "ปิดอยู่ (OFF)";
+    let badgeIcon = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
     let cardStateClass = "sensor-card--inactive";
 
     if (!sensor.ok) {
         badgeClass = "badge--error";
         badgeText = "เซนเซอร์หลุด (FAULT)";
+        badgeIcon = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
         cardStateClass = "sensor-card--fault";
     } else if (sensor.is_on) {
         badgeClass = "badge--on";
         badgeText = "เปิดอยู่ (ON)";
+        badgeIcon = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
         cardStateClass = "sensor-card--active";
     }
 
@@ -422,7 +430,7 @@ function updateSensorCard(card, sensor) {
                 </svg>
                 ${escapeHtml(sensor.sensor_id)}
             </div>
-            <span class="badge ${badgeClass}">${badgeText}</span>
+            <span class="badge ${badgeClass}">${badgeIcon} ${badgeText}</span>
         </div>
 
         <div class="power-gauge">

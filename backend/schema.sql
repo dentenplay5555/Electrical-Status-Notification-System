@@ -31,3 +31,13 @@ CREATE TABLE IF NOT EXISTS latest_status (
     sensors_json TEXT NOT NULL,    -- JSON array ของ SensorReading[]
     updated_at  TEXT NOT NULL      -- ISO timestamp (UTC) ใช้คำนวณ N/A (> 30s)
 );
+
+-- ===== Replay Protection: ตาราง sequence tracking =====
+-- เก็บ sequence_number ล่าสุดของแต่ละ device เพื่อป้องกันข้อมูลเก่า/ซ้ำเขียนทับข้อมูลใหม่
+-- ESP32 ส่ง seq ที่เพิ่มขึ้นเรื่อยๆ → Backend จะ reject ถ้า seq <= ค่าใน table นี้
+CREATE TABLE IF NOT EXISTS device_sequence (
+    device_id       TEXT PRIMARY KEY,
+    boot_id         TEXT,
+    last_sequence   INTEGER NOT NULL DEFAULT 0,
+    updated_at      TEXT NOT NULL
+);

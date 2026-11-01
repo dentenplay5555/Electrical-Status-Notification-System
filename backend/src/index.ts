@@ -5,7 +5,7 @@ import { handleHealth } from "./routes/health";
 import { handleSummary, handleHistory } from "./routes/metrics";
 import { handleAdmin } from "./routes/admin";
 import { handleOptions, jsonResponse } from "./lib/cors";
-import { getTodaySummary, deleteOldReadings } from "./lib/db";
+import { getTodaySummary, deleteOldReadings, getDbQuota } from "./lib/db";
 import { sendLineMessage } from "./lib/line";
 
 export default {
@@ -24,7 +24,7 @@ export default {
             return handleStatus(request, env);
         }
         if (url.pathname === "/health" && request.method === "GET") {
-            return handleHealth();
+            return handleHealth(env);
         }
         if (url.pathname === "/summary" && request.method === "GET") {
             return handleSummary(request, env);
@@ -43,7 +43,7 @@ export default {
     async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
         const deviceId = "ESP32-01";
         try {
-            // 1. ล้าง readings เก่าเกิน 7 วันก่อนเสมอ (ไม่ขึ้นกับว่าวันนี้มีข้อมูลหรือไม่)
+            // 1. ล้าง readings เก่าเกิน 7 วันก่อนเสมอ (Data Retention Policy)
             try {
                 const deleted = await deleteOldReadings(env, 7);
                 if (deleted > 0) {
@@ -53,19 +53,34 @@ export default {
                 console.error("[scheduled] prune error:", pruneErr);
             }
 
-            // 2. ดึงสรุปประจำวัน
-            const summaryRows = await getTodaySummary(env, deviceId);
-
             const thaiDate = new Intl.DateTimeFormat("th-TH", {
                 timeZone: "Asia/Bangkok",
                 dateStyle: "medium",
                 timeStyle: "short",
             }).format(new Date());
 
+            // 2. ตรวจสอบ Database Quota & Alert เมื่อใกล้เต็ม
+            let quotaInfoText = "";
+            try {
+                const quota = await getDbQuota(env);
+                quotaInfoText = `\n💾 D1 Database: ${quota.readings_count.toLocaleString()} แถว (~${quota.estimated_size_mb} MB / ${quota.usage_percent}%)`;
+
+                // Alert ทันทีหากความจุเกิน 80% หรือเกิน 1 ล้านแถว
+                if (quota.usage_percent >= 80 || quota.readings_count >= 1000000) {
+                    const quotaAlert = `🚨 [D1 Quota Alert: พื้นที่ใกล้เต็ม!]\n📅 เวลา: ${thaiDate}\n💾 การใช้งาน: ${quota.usage_percent}% (~${quota.estimated_size_mb} MB / ${quota.d1_free_tier_limit_mb} MB)\n📊 ข้อมูลคงเหลือ: ${quota.readings_count.toLocaleString()} แถว\n📅 เก่าสุด: ${quota.oldest_reading ?? "N/A"}\n\n⚠️ คำแนะนำ: เข้าสู่หน้า Admin Console เพื่อ Prune หรือ Export Backup ข้อมูลออก`;
+                    await sendLineMessage(env, quotaAlert);
+                }
+            } catch (quotaErr) {
+                console.error("[scheduled] quota check error:", quotaErr);
+            }
+
+            // 3. ดึงสรุปการใช้พลังงานประจำวัน
+            const summaryRows = await getTodaySummary(env, deviceId);
+
             if (!summaryRows || summaryRows.length === 0) {
                 await sendLineMessage(
                     env,
-                    `📊 สรุปการใช้พลังงานประจำวัน\n📅 ${thaiDate}\n🤖 อุปกรณ์: ${deviceId}\n\n⚠️ ไม่มีข้อมูลบันทึกในวันนี้`
+                    `📊 สรุปการใช้พลังงานประจำวัน\n📅 ${thaiDate}\n🤖 อุปกรณ์: ${deviceId}\n\n⚠️ ไม่มีข้อมูลบันทึกในวันนี้${quotaInfoText}`
                 );
                 return;
             }
@@ -87,7 +102,7 @@ export default {
                 }
             }
 
-            text += `\n────────────────\nติดตามสถานะเรียลไทม์ได้ที่หน้าเว็บไซต์แดชบอร์ด`;
+            text += `\n────────────────${quotaInfoText}\nติดตามสถานะเรียลไทม์ได้ที่หน้าเว็บไซต์แดชบอร์ด`;
             await sendLineMessage(env, text);
         } catch (err) {
             console.error("[scheduled] error in cron trigger:", err);

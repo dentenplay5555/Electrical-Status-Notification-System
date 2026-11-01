@@ -1,5 +1,5 @@
 #pragma once
 #include "sensor.h"
-bool api_sendReadings(const SensorReading &reading1, const SensorReading &reading2);
-//ใช่แค่นี้เลย
-// using namespace std; int main() {cout<<"Umamusume\n";return 0;}
+// ส่งข้อมูลเซนเซอร์พร้อม sequence_number และ boot_id สำหรับ replay protection และ session tracking
+// มี retry + exponential backoff ในตัว (ดู config.h)
+bool api_sendReadings(const SensorReading &reading1, const SensorReading &reading2, uint32_t sequenceNumber, const char *bootId = nullptr);

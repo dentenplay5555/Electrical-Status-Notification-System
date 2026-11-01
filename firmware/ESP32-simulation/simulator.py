@@ -88,6 +88,7 @@ class ESP32Simulator:
         self.start_time = time.monotonic()
         self.running = True
         self.sequence = 0
+        self.boot_id = f"{random.randint(0, 0xFFFFFFFF):08X}{random.randint(0, 0xFFFFFFFF):08X}"
 
         self.session = requests.Session()
 
@@ -233,12 +234,11 @@ class ESP32Simulator:
         }
 
     def build_payload(self):
-
         self.sequence += 1
-
         return {
             "device_id": self.args.device_id,
-
+            "boot_id": self.boot_id,
+            "sequence_number": self.sequence,
             "sensors": [
                 self.generate_sensor(sensor)
                 for sensor in self.sensors
