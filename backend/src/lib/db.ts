@@ -17,53 +17,41 @@ async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
 }
 
 // ===== Replay Protection: ตรวจ sequence_number ร่วมกับ boot_id =====
-// คืน true ถ้าเป็น session ใหม่ (boot_id เปลี่ยน) หรือ seq ใหม่กว่าค่าเดิมใน session เดียวกัน
-// คืน false ถ้า seq ซ้ำหรือเก่ากว่าใน session เดิม → ปฏิเสธเป็น replay
-export async function checkAndUpdateSequence(
+// แยกเป็น 2 ขั้น เพื่อไม่ให้ seq ถูก "ใช้ไป" ทั้งที่ข้อมูลยังไม่ถูกเขียนลง D1:
+//   1) checkSequence  — อ่านอย่างเดียว ไม่แก้ DB
+//   2) commitSequence — เรียกหลังเขียนข้อมูลสำเร็จแล้วเท่านั้น
+// ถ้า D1 ล่ม (503) ESP32 ส่ง seq เดิมซ้ำได้ ไม่ถูกปฏิเสธเป็น replay
+export async function checkSequence(
     env: Env,
     deviceId: string,
     newSeq: number,
     bootId?: string
 ): Promise<{ allowed: boolean; lastSeq: number; isNewSession?: boolean }> {
-    const now = new Date().toISOString();
-
-    // ดึง boot_id และ sequence ล่าสุดของ device นี้
     const row = await env.DB.prepare(
         `SELECT boot_id, last_sequence FROM device_sequence WHERE device_id = ?`
     )
         .bind(deviceId)
         .first<{ boot_id: string | null; last_sequence: number }>();
 
-    if (row) {
-        // หากส่ง bootId มา และไม่ตรงกับใน DB => อุปกรณ์เพิ่ง reboot / เริ่ม boot session ใหม่
-        if (bootId && row.boot_id !== bootId) {
-            await env.DB.prepare(
-                `UPDATE device_sequence SET boot_id = ?, last_sequence = ?, updated_at = ? WHERE device_id = ?`
-            )
-                .bind(bootId, newSeq, now, deviceId)
-                .run();
+    if (!row) return { allowed: true, lastSeq: 0, isNewSession: true };
 
-            return { allowed: true, lastSeq: 0, isNewSession: true };
-        }
-
-        const lastSeq = row.last_sequence ?? 0;
-
-        // ถ้า newSeq <= lastSeq ใน session เดียวกัน → replay/out-of-order → reject
-        if (newSeq <= lastSeq) {
-            return { allowed: false, lastSeq, isNewSession: false };
-        }
-
-        // newSeq > lastSeq → อัพเดต sequence ใหม่
-        await env.DB.prepare(
-            `UPDATE device_sequence SET last_sequence = ?, updated_at = ? WHERE device_id = ?`
-        )
-            .bind(newSeq, now, deviceId)
-            .run();
-
-        return { allowed: true, lastSeq, isNewSession: false };
+    // boot_id เปลี่ยน = อุปกรณ์ reboot → เริ่ม session ใหม่
+    if (bootId && row.boot_id !== bootId) {
+        return { allowed: true, lastSeq: 0, isNewSession: true };
     }
 
-    // ยังไม่เคยมี record ของ device นี้ => INSERT ครั้งแรก
+    const lastSeq = row.last_sequence ?? 0;
+    if (newSeq <= lastSeq) return { allowed: false, lastSeq, isNewSession: false };
+    return { allowed: true, lastSeq, isNewSession: false };
+}
+
+export async function commitSequence(
+    env: Env,
+    deviceId: string,
+    newSeq: number,
+    bootId?: string
+): Promise<void> {
+    const now = new Date().toISOString();
     await env.DB.prepare(
         `INSERT INTO device_sequence (device_id, boot_id, last_sequence, updated_at) VALUES (?, ?, ?, ?)
          ON CONFLICT(device_id) DO UPDATE SET
@@ -73,8 +61,16 @@ export async function checkAndUpdateSequence(
     )
         .bind(deviceId, bootId ?? null, newSeq, now)
         .run();
+}
 
-    return { allowed: true, lastSeq: 0, isNewSession: true };
+// เวลาของ reading ล่าสุดของ device — ใช้ตัดสินใจว่าจะบันทึกประวัติรอบนี้หรือไม่ (ลดจำนวนแถวที่เขียนต่อวัน)
+export async function getLastReadingTime(env: Env, deviceId: string): Promise<string | null> {
+    const row = await env.DB.prepare(
+        `SELECT MAX(created_at) AS t FROM readings WHERE device_id = ?`
+    )
+        .bind(deviceId)
+        .first<{ t: string | null }>();
+    return row?.t ?? null;
 }
 
 // ----- D1: สถานะล่าสุด (แทน KV) -----

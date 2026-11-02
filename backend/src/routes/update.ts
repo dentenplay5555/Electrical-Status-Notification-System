@@ -1,6 +1,32 @@
 import type { Env, DeviceUpdate, SensorReading } from "../types";
-import { saveLatestStatus, insertReadings, checkAndUpdateSequence } from "../lib/db";
+import { saveLatestStatus, insertReadings, checkSequence, commitSequence, getLatestStatus, getLastReadingTime } from "../lib/db";
 import { jsonResponse } from "../lib/cors";
+
+// บันทึกประวัติลงตาราง readings อย่างน้อยทุกกี่ ms (หรือทันทีเมื่อสถานะเปลี่ยน)
+// ลดแถวที่เขียนต่อวัน: latest_status ยังอัปเดตทุก heartbeat เพื่อให้ N/A (30 วิ) ทำงานเหมือนเดิม
+const HISTORY_INTERVAL_MS = 60_000;
+
+function sensorsChanged(prev: { sensor_id: string; is_on: boolean; ok: boolean }[] | undefined, next: { sensor_id: string; is_on: boolean; ok: boolean }[]): boolean {
+    if (!prev || prev.length !== next.length) return true;
+    return next.some((n) => {
+        const p = prev.find((x) => x.sensor_id === n.sensor_id);
+        return !p || p.is_on !== n.is_on || p.ok !== n.ok;
+    });
+}
+
+async function shouldRecordHistory(env: Env, update: DeviceUpdate): Promise<boolean> {
+    try {
+        const [prev, lastAt] = await Promise.all([
+            getLatestStatus(env, update.device_id),
+            getLastReadingTime(env, update.device_id),
+        ]);
+        if (!prev || !lastAt) return true;
+        if (sensorsChanged(prev.sensors, update.sensors)) return true;
+        return Date.now() - new Date(lastAt).getTime() >= HISTORY_INTERVAL_MS;
+    } catch {
+        return true; // อ่านไม่ได้ → บันทึกไว้ก่อน ดีกว่าข้อมูลหาย
+    }
+}
 
 // ----- Auth -----
 // แฮชด้วย SHA-256 ทั้งสองด้านก่อน เพื่อให้ buffer มีความยาว 32 bytes เท่ากันเสมอ
@@ -119,7 +145,7 @@ export async function handleUpdate(request: Request, env: Env): Promise<Response
         // ถ้า ESP32 ส่ง sequence_number มา → ต้อง > ค่าล่าสุดใน DB (ใน boot session นั้น)
         // ถ้า boot_id เปลี่ยน (ESP32 reboot) → Backend ยอมรับและเริ่ม session ใหม่
         if (body.sequence_number !== undefined && body.sequence_number > 0) {
-            const seqCheck = await checkAndUpdateSequence(env, body.device_id, body.sequence_number, body.boot_id);
+            const seqCheck = await checkSequence(env, body.device_id, body.sequence_number, body.boot_id);
             if (!seqCheck.allowed) {
                 console.warn(
                     `[update] replay detected: device=${body.device_id} boot=${body.boot_id ?? "legacy"} sent seq=${body.sequence_number} but last_seq=${seqCheck.lastSeq}`
@@ -134,20 +160,21 @@ export async function handleUpdate(request: Request, env: Env): Promise<Response
             }
         }
 
-        // 5. เขียนลง D1 พร้อมกัน: latest_status (แทน KV) + readings (ประวัติ)
-        // ใช้ Promise.allSettled เพื่อให้ระบบทำงานต่อได้แบบ degraded mode แม้ตารางใดตารางหนึ่งขัดข้องชั่วคราว
+        // 5. เขียนลง D1: latest_status ทุกครั้ง + readings (ประวัติ) เมื่อสถานะเปลี่ยนหรือครบ HISTORY_INTERVAL_MS
+        // ใช้ Promise.allSettled เพื่อให้ทำงานต่อแบบ degraded mode แม้ตารางใดตารางหนึ่งล้มเหลว
+        const recordHistory = await shouldRecordHistory(env, body);
         const [statusResult, readingsResult] = await Promise.allSettled([
             saveLatestStatus(env, body),
-            insertReadings(env, body),
+            recordHistory ? insertReadings(env, body) : Promise.resolve(),
         ]);
 
         const statusOk = statusResult.status === "fulfilled";
         const readingsOk = readingsResult.status === "fulfilled";
 
-        // หากล้มเหลวทั้งสองตาราง = D1 ล่มอย่างสิ้นเชิง
-        if (!statusOk && !readingsOk) {
-            console.error("[update] D1 completely unavailable:", statusResult.reason, readingsResult.reason);
-            // คืน 503 เพื่อให้ ESP32 รับรู้และเก็บข้อมูลเข้า Offline Ring Buffer รอส่งใหม่
+        // ล้มเหลวหมด (หรือ latest_status ล้มเหลวขณะรอบนี้ไม่ได้บันทึกประวัติ) = ไม่มีอะไรถูกเก็บ
+        // → ไม่ commit sequence แล้วตอบ 503 เพื่อให้ ESP32 ส่ง seq เดิมซ้ำได้
+        if (!statusOk && (!recordHistory || !readingsOk)) {
+            console.error("[update] D1 write failed:", statusResult.status === "rejected" ? statusResult.reason : "", readingsResult.status === "rejected" ? readingsResult.reason : "");
             return jsonResponse(
                 {
                     error: "database temporarily unavailable",
@@ -157,18 +184,27 @@ export async function handleUpdate(request: Request, env: Env): Promise<Response
             );
         }
 
+        // 6. เขียนสำเร็จอย่างน้อยหนึ่งตาราง → commit sequence (เพื่อให้ replay ถูกปฏิเสธนับจากตรงนี้)
+        if (body.sequence_number !== undefined && body.sequence_number > 0) {
+            try {
+                await commitSequence(env, body.device_id, body.sequence_number, body.boot_id);
+            } catch (seqErr) {
+                console.warn("[update] commitSequence failed (data saved):", seqErr);
+            }
+        }
+
         // กรณีสำเร็จบางส่วน (Degraded Mode)
         if (!statusOk) {
             console.warn("[update] saveLatestStatus failed (readings saved):", statusResult.reason);
         }
-        if (!readingsOk) {
+        if (recordHistory && !readingsOk) {
             console.warn("[update] insertReadings failed (latest_status saved):", readingsResult.reason);
         }
 
         return jsonResponse({
             ok: true,
-            degraded: !statusOk || !readingsOk,
-            warning: !readingsOk ? "readings history write failed, latest status updated" : undefined,
+            degraded: !statusOk || (recordHistory && !readingsOk),
+            warning: recordHistory && !readingsOk ? "readings history write failed, latest status updated" : undefined,
             timestamp: new Date().toISOString(),
             boot_id: body.boot_id ?? null,
             sequence_number: body.sequence_number ?? null,

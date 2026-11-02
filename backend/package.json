@@ -6,8 +6,10 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "test": "npx tsx --test test/worker.test.mjs",
-    "db:migrate": "wrangler d1 execute appliance-db --file=./schema.sql"
+    "test": "npx tsx --test test/worker.test.mjs test/resilience.test.mjs",
+    "db:migrate": "wrangler d1 execute appliance-db --local --file=./schema.sql",
+    "db:migrate:remote": "wrangler d1 execute appliance-db --remote --file=./schema.sql",
+    "db:drop-index:remote": "wrangler d1 execute appliance-db --remote --file=./migrations/001_drop_sensor_time_index.sql"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260702.1",

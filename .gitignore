@@ -55,3 +55,6 @@ Thumbs.db
 frontend/.agents
 frontend/AGENTS.md
 IS
+*gitignore.odt
+.obsidian
+Test case.md

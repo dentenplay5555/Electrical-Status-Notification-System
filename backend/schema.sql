@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS readings (
     created_at  TEXT NOT NULL      -- ISO timestamp (UTC)
 );
 CREATE INDEX IF NOT EXISTS idx_readings_device_time ON readings (device_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_readings_sensor_time ON readings (sensor_id, created_at);
 -- สถานะล่าสุดต่อ device (แทน KV) — upsert ทุก heartbeat, ใช้ร่วมกับ /status
 -- เก็บ sensors[] เป็น JSON string เพื่อให้ query ได้ง่ายโดยไม่ต้อง JOIN บ่อยๆ
 CREATE TABLE IF NOT EXISTS latest_status (

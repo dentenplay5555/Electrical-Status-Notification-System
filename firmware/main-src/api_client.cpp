@@ -54,6 +54,13 @@ bool api_sendReadings(const SensorReading &reading1, const SensorReading &readin
             return true;
         }
 
+        // 409 = Worker เคยรับ seq นี้ไปแล้ว (เช่น timeout ตอนรอคำตอบ) → ถือว่าส่งสำเร็จ
+        // ถ้าไม่ทำแบบนี้ offline buffer จะค้างที่ชุดนี้ตลอดจนกว่าจะรีบูต
+        if (httpCode == 409) {
+            Serial.printf("[api] HTTP 409 — เซิร์ฟเวอร์มี seq=%lu แล้ว ข้ามชุดนี้\n", (unsigned long)sequenceNumber);
+            return true;
+        }
+
         // ถ้า 4xx (ยกเว้น 429 Rate Limit) → ข้อมูลผิด ไม่ต้อง retry
         if (httpCode >= 400 && httpCode < 500 && httpCode != 429) {
             Serial.printf("[api] ส่งไม่สำเร็จ (HTTP %d) — client error, ข้ามการ retry\n", httpCode);
