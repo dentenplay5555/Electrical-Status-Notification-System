@@ -1285,7 +1285,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
             if (!lab.log.length) { alert('ยังไม่มีข้อมูล'); return; }
             const cols = ['time', 'http', 'rtt_ms', 'status', 'age_s', 'sensors'];
             const lines = [cols.join(',')].concat(lab.log.map(function (r) { return cols.map(function (c) { return '"' + String(r[c]).replace(/"/g, '""') + '"'; }).join(','); }));
-            const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            const blob = new Blob(['﻿' + lines.join(String.fromCharCode(10))], { type: 'text/csv;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = 'lab-polling-' + new Date().toISOString().replace(/[:.]/g, '-') + '.csv';

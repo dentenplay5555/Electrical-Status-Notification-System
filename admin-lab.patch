@@ -1,0 +1,201 @@
+diff --git a/backend/src/routes/admin.ts b/backend/src/routes/admin.ts
+index 837d536..5af0253 100644
+--- a/backend/src/routes/admin.ts
++++ b/backend/src/routes/admin.ts
+@@ -672,6 +672,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
+                 <button class="tab-btn" onclick="switchTab('tab-sql')">⚡ D1 SQL Query Runner</button>
+                 <button class="tab-btn" onclick="switchTab('tab-actions')">⚙️ จัดการระบบ & LINE Test</button>
+                 <button class="tab-btn" onclick="switchTab('tab-quota')">💾 โควต้า & สำรองข้อมูล (Quota & Backup)</button>
++                <button class="tab-btn" onclick="switchTab('tab-lab')">🧪 ห้องทดลอง (Latency / N/A)</button>
+             </div>
+ 
+             <!-- Tab 1: POST /update Simulator -->
+@@ -744,6 +745,53 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
+                 </div>
+             </div>
+ 
++            <!-- Tab: ห้องทดลอง (Latency / N/A / CSV) -->
++            <div id="tab-lab" class="tab-pane">
++                <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">
++                    ช่วยเก็บข้อมูลการทดลองที่ 4 (ความหน่วง) และ 5 (N/A): ยิง <code>GET /status</code> ซ้ำอัตโนมัติ วัดเวลา fetch (ms) อายุข้อมูลฝั่งเซิร์ฟเวอร์ และจับเวลาตั้งแต่กดปุ่มจนสถานะเปลี่ยน
++                    ค่าที่ได้มีความละเอียดเท่ากับช่วง polling จึงควรเลือก 2 วินาทีเมื่อวัดความหน่วง
++                </p>
++                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
++                    <input type="text" id="lab-device" class="text-input" style="width:150px;margin-bottom:0;" value="ESP32-01" />
++                    <select id="lab-interval" class="text-input" style="width:120px;margin-bottom:0;">
++                        <option value="2000" selected>ทุก 2 วินาที</option>
++                        <option value="5000">ทุก 5 วินาที</option>
++                        <option value="10000">ทุก 10 วินาที</option>
++                    </select>
++                    <button type="button" class="btn btn--primary" id="lab-toggle" onclick="labToggle()">▶ เริ่ม</button>
++                    <button type="button" class="btn" onclick="labClear()">🗑 ล้าง</button>
++                    <button type="button" class="btn" onclick="labExportCsv()">⬇ CSV (ผล polling)</button>
++                </div>
++
++                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
++                    <div class="diag-item"><div class="diag-label">สถานะล่าสุด</div><div class="diag-val" id="lab-status">-</div></div>
++                    <div class="diag-item"><div class="diag-label">เวลา fetch ล่าสุด (ms)</div><div class="diag-val" id="lab-rtt">-</div></div>
++                    <div class="diag-item"><div class="diag-label">อายุข้อมูล (วินาที, ตามเซิร์ฟเวอร์)</div><div class="diag-val" id="lab-age">-</div></div>
++                    <div class="diag-item"><div class="diag-label">เซนเซอร์</div><div class="diag-val" id="lab-sensors" style="font-size:0.8rem;">-</div></div>
++                </div>
++
++                <strong style="font-size:0.85rem;">สถิติเวลา fetch (ms)</strong>
++                <div id="lab-rtt-stats" style="font-size:0.85rem;margin:6px 0 16px;color:var(--text-secondary);">ยังไม่มีข้อมูล</div>
++
++                <strong style="font-size:0.85rem;">จับเวลาความหน่วง / N/A</strong>
++                <p style="color:var(--text-secondary);font-size:0.8rem;margin:4px 0 8px;">
++                    กดปุ่ม <u>พร้อมกับ</u> การสลับโหลดจริง (หรือถอดไฟ ESP32) จับเวลาจะหยุดเองเมื่อหน้าเว็บเห็นสถานะเปลี่ยน ต้องกด "เริ่ม" polling ก่อน
++                </p>
++                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
++                    <select id="lab-sensor" class="text-input" style="width:150px;margin-bottom:0;"></select>
++                    <button type="button" class="btn" onclick="labWatch('on')">⏱ เปลี่ยนเป็น ON</button>
++                    <button type="button" class="btn" onclick="labWatch('off')">⏱ เปลี่ยนเป็น OFF</button>
++                    <button type="button" class="btn" onclick="labWatch('na')">⏱ ถอดไฟ → N/A</button>
++                    <span id="lab-watch-msg" style="font-size:0.85rem;color:var(--accent);"></span>
++                </div>
++                <div class="table-wrap">
++                    <table>
++                        <thead><tr><th>รายการ</th><th>ค่าที่วัดได้ (วินาที)</th><th>n</th><th>เฉลี่ย</th><th>SD</th><th>P50</th><th>P95</th></tr></thead>
++                        <tbody id="lab-lat-body"></tbody>
++                    </table>
++                </div>
++            </div>
++
+             <!-- Tab 3: D1 SQL Query Runner -->
+             <div id="tab-sql" class="tab-pane">
+                 <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">
+@@ -1118,6 +1166,134 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
+             }
+         }
+ 
++        // ===== ห้องทดลอง: วัดเวลา fetch / ความหน่วง / N/A =====
++        const lab = { timer: null, log: [], rtts: [], watch: null, lat: { on: [], off: [], na: [] }, sensorIds: [], last: null };
++
++        function labPercentile(arr, p) {
++            if (!arr.length) return null;
++            const a = arr.slice().sort((x, y) => x - y);
++            const k = (a.length - 1) * p, f = Math.floor(k), c = Math.min(f + 1, a.length - 1);
++            return a[f] + (a[c] - a[f]) * (k - f);
++        }
++        function labStats(arr) {
++            const n = arr.length;
++            if (!n) return null;
++            const mean = arr.reduce((s, x) => s + x, 0) / n;
++            const sd = n > 1 ? Math.sqrt(arr.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (n - 1)) : 0;
++            return { n: n, mean: mean, sd: sd, p50: labPercentile(arr, 0.5), p95: labPercentile(arr, 0.95), min: Math.min.apply(null, arr), max: Math.max.apply(null, arr) };
++        }
++        function labFmt(x, d) { return x === null || x === undefined ? '-' : x.toFixed(d); }
++
++        function labRender() {
++            const s = labStats(lab.rtts);
++            document.getElementById('lab-rtt-stats').textContent = s
++                ? 'n=' + s.n + '  เฉลี่ย=' + labFmt(s.mean, 0) + '  min=' + labFmt(s.min, 0) + '  max=' + labFmt(s.max, 0) + '  P50=' + labFmt(s.p50, 0) + '  P95=' + labFmt(s.p95, 0)
++                : 'ยังไม่มีข้อมูล';
++            const names = { on: 'เปลี่ยนเป็น ON', off: 'เปลี่ยนเป็น OFF', na: 'ถอดไฟ → N/A' };
++            let html = '';
++            ['on', 'off', 'na'].forEach(function (k) {
++                const st = labStats(lab.lat[k]);
++                html += '<tr><td>' + names[k] + '</td><td>' + (lab.lat[k].map(function (x) { return x.toFixed(1); }).join(', ') || '-') + '</td><td>' + (st ? st.n : 0) +
++                    '</td><td>' + (st ? labFmt(st.mean, 2) : '-') + '</td><td>' + (st ? labFmt(st.sd, 2) : '-') + '</td><td>' + (st ? labFmt(st.p50, 2) : '-') + '</td><td>' + (st ? labFmt(st.p95, 2) : '-') + '</td></tr>';
++            });
++            document.getElementById('lab-lat-body').innerHTML = html;
++        }
++
++        function labWatch(kind) {
++            if (!lab.timer) { alert('กด "เริ่ม" polling ก่อน'); return; }
++            const sel = document.getElementById('lab-sensor').value;
++            if (kind !== 'na' && lab.last) {
++                const sn = (lab.last.sensors || []).find(function (x) { return x.sensor_id === sel; });
++                if (sn && sn.ok && sn.is_on === (kind === 'on')) { alert('สถานะตอนนี้เป็น ' + kind.toUpperCase() + ' อยู่แล้ว ให้กดตอนที่สถานะตรงข้ามกับเป้าหมาย'); return; }
++            }
++            if (kind === 'na' && lab.last && (lab.last.status === 'N/A' || lab.last.is_stale)) { alert('ตอนนี้เป็น N/A อยู่แล้ว'); return; }
++            lab.watch = { kind: kind, sensor: sel, start: performance.now() };
++            document.getElementById('lab-watch-msg').textContent = '⏳ กำลังจับเวลา (' + kind.toUpperCase() + ')...';
++        }
++
++        function labCheckWatch(data) {
++            const w = lab.watch;
++            if (!w || !data) return;
++            let hit = false;
++            if (w.kind === 'na') {
++                hit = data.status === 'N/A' || data.is_stale === true;
++            } else if (data.status !== 'N/A' && !data.is_stale) {
++                const sn = (data.sensors || []).find(function (x) { return x.sensor_id === w.sensor; });
++                hit = !!(sn && sn.ok && sn.is_on === (w.kind === 'on'));
++            }
++            if (hit) {
++                const sec = (performance.now() - w.start) / 1000;
++                lab.lat[w.kind].push(sec);
++                lab.watch = null;
++                document.getElementById('lab-watch-msg').textContent = '✅ ' + w.kind.toUpperCase() + ' = ' + sec.toFixed(1) + ' วินาที';
++                labRender();
++            }
++        }
++
++        async function labPoll() {
++            const dev = document.getElementById('lab-device').value.trim() || 'ESP32-01';
++            const t0 = performance.now();
++            const row = { time: new Date().toISOString(), http: '', rtt_ms: '', status: '', age_s: '', sensors: '' };
++            let data = null;
++            try {
++                const res = await fetch('/status?device_id=' + encodeURIComponent(dev), { cache: 'no-store' });
++                row.rtt_ms = Math.round(performance.now() - t0);
++                row.http = res.status;
++                data = await res.json();
++                row.status = data.status || '';
++                row.age_s = typeof data.stale_seconds === 'number' ? data.stale_seconds : '';
++                const src = (data.sensors && data.sensors.length) ? data.sensors : (data.last_known_sensors || []);
++                row.sensors = src.map(function (x) { return x.sensor_id + '=' + (x.ok ? (x.is_on ? 'ON' : 'OFF') : 'FAULT') + ':' + (x.current_ma !== undefined ? Number(x.current_ma).toFixed(1) : ''); }).join(' ');
++                if (res.ok) lab.rtts.push(row.rtt_ms);
++                lab.last = data;
++                const ids = (data.sensors || []).map(function (x) { return x.sensor_id; });
++                if (ids.length && ids.join() !== lab.sensorIds.join()) {
++                    lab.sensorIds = ids;
++                    document.getElementById('lab-sensor').innerHTML = ids.map(function (id) { return '<option value="' + id + '">' + id + '</option>'; }).join('');
++                }
++            } catch (err) {
++                row.status = 'ERROR';
++                row.http = 'ERR';
++            }
++            lab.log.push(row);
++            document.getElementById('lab-status').textContent = row.status || '-';
++            document.getElementById('lab-rtt').textContent = row.rtt_ms === '' ? '-' : row.rtt_ms;
++            document.getElementById('lab-age').textContent = row.age_s === '' ? '-' : row.age_s;
++            document.getElementById('lab-sensors').textContent = row.sensors || '-';
++            labCheckWatch(data);
++            labRender();
++        }
++
++        function labToggle() {
++            const btn = document.getElementById('lab-toggle');
++            if (lab.timer) {
++                clearInterval(lab.timer); lab.timer = null; btn.textContent = '▶ เริ่ม';
++            } else {
++                labPoll();
++                lab.timer = setInterval(labPoll, parseInt(document.getElementById('lab-interval').value, 10));
++                btn.textContent = '⏹ หยุด';
++            }
++        }
++
++        function labClear() {
++            lab.log = []; lab.rtts = []; lab.lat = { on: [], off: [], na: [] }; lab.watch = null;
++            document.getElementById('lab-watch-msg').textContent = '';
++            labRender();
++        }
++
++        function labExportCsv() {
++            if (!lab.log.length) { alert('ยังไม่มีข้อมูล'); return; }
++            const cols = ['time', 'http', 'rtt_ms', 'status', 'age_s', 'sensors'];
++            const lines = [cols.join(',')].concat(lab.log.map(function (r) { return cols.map(function (c) { return '"' + String(r[c]).replace(/"/g, '""') + '"'; }).join(','); }));
++            const blob = new Blob(['﻿' + lines.join(String.fromCharCode(10))], { type: 'text/csv;charset=utf-8' });
++            const a = document.createElement('a');
++            a.href = URL.createObjectURL(blob);
++            a.download = 'lab-polling-' + new Date().toISOString().replace(/[:.]/g, '-') + '.csv';
++            a.click();
++            URL.revokeObjectURL(a.href);
++        }
++        labRender();
++
+         function setGetUrl(url) {
+             document.getElementById('get-url').value = url;
+         }
